@@ -1,0 +1,9 @@
+pandas
+joblib
+numpy
+torch
+spacy
+tqdm
+langdetect
+sentence-transformers
+streamlit
