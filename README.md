@@ -19,22 +19,22 @@ The interface allows users to review, edit, and export tags via a Streamlit web 
 ```
 rkd-semantic-tagger/
 ├── pipeline/
-│   ├── pipeline.py
-│   ├── labse_logreg_model.pkl
-│   ├── labse_label_binarizer.pkl
-│   ├── SUBJECT_all_terms_DUTCH.csv
-│   ├── SUBJECT_all_terms_ENGLISH.csv
-│   ├── rkd_aat_term_mapping.csv
-│   └── example_input.csv
+│   ├── pipeline.py                     # Main tagging pipeline script
+│   ├── labse_logreg_model.pkl          # Trained Logistic Regression model using LaBSE embeddings
+│   ├── labse_label_binarizer.pkl       # Label binarizer for multi-label classification
+│   ├── SUBJECT_all_terms_DUTCH.csv     # Subject vocabulary (Dutch) for model use
+│   ├── SUBJECT_all_terms_ENGLISH.csv   # Subject vocabulary (English) for model use
+│   ├── rkd_aat_term_mapping.csv        # Mapping of RKD subject terms to AAT concepts
+│   └── example_input.csv               # Example input file for testing the pipeline
 │
 ├── interface/
-│   ├── interface.py
+│   ├── interface.py                    # Streamlit app for user interaction
+│   ├── SUBJECT_all_terms_DUTCH.csv     # Subject vocabulary (Dutch) for UI display
+│   ├── SUBJECT_all_terms_ENGLISH.csv   # Subject vocabulary (English) for UI display
 │
-├── requirements.txt
-├── screenshots/
-└── README.md
+├── requirements.txt                    
+└── README.md                           
 ```
-
 ---
 
 ## 🚀 How to Use
