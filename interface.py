@@ -16,24 +16,32 @@ SCRIPT_NAME = "final_final_pipeline.py"
 SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
-st.set_page_config(page_title="semARTagger", layout="wide")
+st.set_page_config(layout="wide")
+
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
-<h1 class="montserrat-title" style='
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 2px #000, 0 0 1px #fff;
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
+<h1 class="kaushan-title" style='
+    font-family: "Kaushan Script", cursive !important;
+    font-size: 4rem;
+    font-weight: 400;
+    letter-spacing: 2px;
     margin-bottom: 0.5em;
 '>
     semARTagger
 </h1>
+<style>
+.kaushan-title {
+    font-family: 'Kaushan Script', cursive !important;
+    font-weight: 400 !important;
+    letter-spacing: 2px;
+}
+</style>
 """, unsafe_allow_html=True)
 
-# --- Load Questrial font from Google Fonts and force it everywhere ---
 st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
     <style>
-        *:not(.montserrat-title) { font-family: 'Questrial', sans-serif !important; }
+        *:not(.montserrat-title):not(.kaushan-title) { font-family: 'Questrial', sans-serif !important; }
         html, body, [class*="css"] { font-size: 16px; line-height: 1.6; }
         body { background-color: #111; color: #eee; }
         .stButton>button {
@@ -57,7 +65,7 @@ st.markdown("""
         }
         /* Make all sidebar labels bigger */
         [data-testid="stSidebar"] label {
-            font-size: 15px !important;
+            font-size: 13px !important;
             font-weight: 600 !important;
         }
         .montserrat-title {
@@ -87,9 +95,9 @@ saved_sessions = [
     for f in os.listdir(SESSION_DIR)
     if f.startswith("session_") and "_backup_" not in f
 ]
-st.sidebar.subheader("SESSION MANAGEMENT")
+st.sidebar.subheader("Session Management")
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
-if session_to_delete != "None" and st.sidebar.button("❌ Delete Session"):
+if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
     st.sidebar.success(f"Deleted session: {session_to_delete}")
     st.rerun()
@@ -99,7 +107,7 @@ session_name = st.sidebar.selectbox(
     "Select or create a session",
     options=["(new session)"] + saved_sessions,
     index=0,
-    format_func=lambda x: "🆕 Create new session" if x == "(new session)" else x,
+    format_func=lambda x: "Create new session" if x == "(new session)" else x,
     key="session_select"
 )
 
@@ -152,7 +160,7 @@ if mode == "Run tagging pipeline":
         with open(input_filename, "wb") as f:
             f.write(uploaded_file.read())
         output_name = st.text_input("Name your output CSV (for download only)", value="tagged_output")
-        if st.button("Run Tagging Pipeline ✅"):
+        if st.button("Run Tagging Pipeline"):
             with st.spinner("Running the tagging pipeline..."):
                 try:
                     result = subprocess.run(
@@ -161,10 +169,10 @@ if mode == "Run tagging pipeline":
                         text=True,
                     )
                     if result.returncode != 0:
-                        st.error("❌ Error running the pipeline:")
+                        st.error("Error running the pipeline:")
                         st.code(result.stderr)
                     else:
-                        st.success("✅ Pipeline completed successfully!")
+                        st.success("Pipeline completed successfully!")
                         st.session_state["output_ready"] = output_filename
                         st.info(f"Output file created: {output_filename}")
                 except Exception as e:
@@ -176,7 +184,7 @@ elif mode == "Upload pre-tagged CSV":
         with open(output_filename, "wb") as f:
             f.write(pretagged_file.read())
         st.session_state["output_ready"] = output_filename
-        st.success("✅ File uploaded and ready for review!")
+        st.success("File uploaded and ready for review!")
     else:
         st.warning("Please upload a pre-tagged CSV file.")
 
