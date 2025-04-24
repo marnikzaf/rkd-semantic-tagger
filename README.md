@@ -1,6 +1,6 @@
-# rkd-semantic-tagger
+# semARTagger
 
-This repository contains the code for **rkd-semantic-tagger**, a pipeline developed as part of my Master's thesis in *Cultural Data & AI* at the University of Amsterdam. It automates the tagging of historical artworks based on semantic similarity, using multilingual sentence embeddings and a logistic regression classifier.
+This repository contains the code for **semARTagger**, a pipeline developed as part of my Master's thesis in *Cultural Data & AI* at the University of Amsterdam. It automates the tagging of historical artworks based on semantic similarity, using multilingual sentence embeddings and a logistic regression classifier.
 
 The tool was designed to process Dutch art exhibition catalogues and enrich them with descriptive tags, supporting art historical research and data structuring efforts at the RKD (Netherlands Institute for Art History).
 
@@ -18,7 +18,7 @@ The interface allows users to review, edit, and export tags via a Streamlit web 
 
 ```
 rkd-semantic-tagger/
-├── final_final_pipeline.py             # Main tagging pipeline script
+├── pipeline.py                         # Main tagging pipeline script
 ├── labse_logreg_model.pkl              # Trained Logistic Regression model using LaBSE embeddings
 ├── labse_label_binarizer.pkl           # Label binarizer for multi-label classification
 ├── SUBJECT_all_terms_DUTCH.csv         # Subject vocabulary (Dutch) for model and UI
