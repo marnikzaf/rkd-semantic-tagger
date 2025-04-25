@@ -18,15 +18,17 @@ os.makedirs(SESSION_DIR, exist_ok=True)
 
 st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
+# --- Assign or retrieve a persistent user_id ---
+query_params = st.experimental_get_query_params()
+if "user_id" in query_params:
+    st.session_state["user_id"] = query_params["user_id"][0]
+else:
+    st.session_state["user_id"] = str(uuid.uuid4())[:8]
+    st.experimental_set_query_params(user_id=st.session_state["user_id"])
+
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
-<h1 class="kaushan-title" style='
-    font-family: "Kaushan Script", cursive !important;
-    font-size: 4rem;
-    font-weight: 400;
-    letter-spacing: 2px;
-    margin-bottom: 0.5em;
-'>
+<h1 class="kaushan-title" style='font-family: "Kaushan Script", cursive !important; font-size: 4rem; font-weight: 400; letter-spacing: 2px; margin-bottom: 0.5em;'>
     semARTagger
 </h1>
 <style>
@@ -39,40 +41,39 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-    <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
-    <style>
-        *:not(.montserrat-title):not(.kaushan-title) { font-family: 'Questrial', sans-serif !important; }
-        html, body, [class*="css"] { font-size: 14px; line-height: 1.6; }
-        body { background-color: #111; color: #eee; }
-        .stButton>button {
-           background-color: transparent;
-           color: inherit;
-           font-size: 13px !important;
-           padding: 8px 16px;
-           border: 1px solid currentColor;
-           border-radius: 8px;
-           cursor: pointer;
-           white-space: nowrap !important;
-        }
-        .stButton>button:hover { background-color: rgba(255, 255, 255, 0.1); }
-        .stTextInput input, .stTextArea textarea,
-        .stMultiselect>div>div>input, .stSelectbox>div>div>input {
-           padding: 8px;
-           border-radius: 5px;
-           border: 1px solid #888;
-           background-color: inherit;
-           color: inherit;
-        }
-        /* Make all sidebar labels bigger */
-        [data-testid="stSidebar"] label {
-            font-size: 13px !important;
-            font-weight: 600 !important;
-        }
-        .montserrat-title {
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 700 !important;
-        }
-    </style>
+<link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
+<style>
+    *:not(.montserrat-title):not(.kaushan-title) { font-family: 'Questrial', sans-serif !important; }
+    html, body, [class*="css"] { font-size: 14px; line-height: 1.6; }
+    body { background-color: #111; color: #eee; }
+    .stButton>button {
+       background-color: transparent;
+       color: inherit;
+       font-size: 13px !important;
+       padding: 8px 16px;
+       border: 1px solid currentColor;
+       border-radius: 8px;
+       cursor: pointer;
+       white-space: nowrap !important;
+    }
+    .stButton>button:hover { background-color: rgba(255, 255, 255, 0.1); }
+    .stTextInput input, .stTextArea textarea,
+    .stMultiselect>div>div>input, .stSelectbox>div>div>input {
+       padding: 8px;
+       border-radius: 5px;
+       border: 1px solid #888;
+       background-color: inherit;
+       color: inherit;
+    }
+    [data-testid="stSidebar"] label {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }
+    .montserrat-title {
+        font-family: 'Montserrat', sans-serif !important;
+        font-weight: 700 !important;
+    }
+</style>
 """, unsafe_allow_html=True)
 
 # --- Load full vocabularies for dropdowns ---
@@ -91,14 +92,15 @@ def sanitize_filename(name):
 
 session_path = None
 saved_sessions = [
-    f.replace("session_", "").replace(".json", "")
+    f.replace(f"session_{st.session_state['user_id']}_", "").replace(".json", "")
     for f in os.listdir(SESSION_DIR)
-    if f.startswith("session_") and "_backup_" not in f
+    if f.startswith(f"session_{st.session_state['user_id']}_") and "_backup_" not in f
 ]
+
 st.sidebar.subheader("Session Management")
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
 if session_to_delete != "None" and st.sidebar.button("Delete Session"):
-    os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
+    os.remove(os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_to_delete}.json"))
     st.sidebar.success(f"Deleted session: {session_to_delete}")
     st.rerun()
 
@@ -115,7 +117,7 @@ if session_name == "(new session)":
     new_session_input = st.sidebar.text_input("Enter a new session name")
     if new_session_input:
         session_name = sanitize_filename(new_session_input)
-        session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
+        session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
         with open(session_path, "w") as f:
             json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
         st.sidebar.success(f"Session '{session_name}' created and saved!")
@@ -125,12 +127,8 @@ if session_name == "(new session)":
         st.warning("Please enter a valid session name to create a new session.")
         st.stop()
 else:
-    session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
-    # --- Restore session state if changed ---
-    if (
-        "restored_session" not in st.session_state
-        or st.session_state["restored_session"] != session_name
-    ):
+    session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
+    if ("restored_session" not in st.session_state or st.session_state["restored_session"] != session_name):
         if os.path.exists(session_path):
             with open(session_path, "r") as f:
                 data = json.load(f)
