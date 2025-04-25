@@ -79,6 +79,8 @@ st.markdown("""
 
 # --- Admin tools for manual clean up (only show if admin checkbox enabled) ---
 if st.sidebar.checkbox("⚙️ Admin Tools"):
+    st.sidebar.caption(f"🆔 Current user ID: `{st.session_state['user_id']}`")
+
     if "delete_clicked" not in st.session_state:
         st.session_state.delete_clicked = False
 
@@ -93,6 +95,10 @@ if st.sidebar.checkbox("⚙️ Admin Tools"):
         st.sidebar.success("✅ All sessions deleted! Fresh start.")
         if st.sidebar.button("🔄 Click to refresh"):
             st.rerun()
+
+    if st.sidebar.button("🔁 Start Fresh (new user)"):
+        st.query_params = {}  # Remove user_id from URL
+        st.rerun()
             
 # --- Load full vocabularies for dropdowns ---
 dutch_keywords, english_keywords = [], []
