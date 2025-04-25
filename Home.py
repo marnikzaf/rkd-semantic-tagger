@@ -76,6 +76,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# --- Admin tools for manual clean up (only show if admin checkbox enabled) ---
+if st.sidebar.checkbox("⚙️ Admin Tools"):
+    if st.sidebar.button("🚨 Delete ALL sessions (be careful)"):
+        if os.path.exists("sessions"):
+            shutil.rmtree("sessions")
+            os.makedirs(SESSION_DIR, exist_ok=True)
+            st.sidebar.success("All sessions deleted! Fresh start.")
+            st.rerun()
+            
 # --- Load full vocabularies for dropdowns ---
 dutch_keywords, english_keywords = [], []
 try:
