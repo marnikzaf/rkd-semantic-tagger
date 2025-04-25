@@ -22,7 +22,7 @@ if "user_id" in query_params:
 else:
     # If no user_id is found in the query params, generate a new one and store it
     st.session_state["user_id"] = str(uuid.uuid4())[:8]
-    # Ensure the query params are updated (so user_id is always in the URL)
+    # Ensure the query params are updated, so user_id is always in the URL
     st.experimental_set_query_params(user_id=st.session_state["user_id"])
 
 # --- CONFIG (after user_id exists) ---
