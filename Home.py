@@ -19,12 +19,12 @@ os.makedirs(SESSION_DIR, exist_ok=True)
 st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
 # --- Assign or retrieve a persistent user_id ---
-query_params = st.experimental_get_query_params()
+query_params = st.query_params
 if "user_id" in query_params:
-    st.session_state["user_id"] = query_params["user_id"][0]
+    st.session_state["user_id"] = query_params["user_id"]
 else:
     st.session_state["user_id"] = str(uuid.uuid4())[:8]
-    st.experimental_set_query_params(user_id=st.session_state["user_id"])
+    st.query_params = {"user_id": st.session_state["user_id"]}
 
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
