@@ -15,11 +15,15 @@ st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
 # --- Assign or retrieve a persistent user_id ---
 query_params = st.query_params
+
+# If there's a user_id in the query params, assign it to session state
 if "user_id" in query_params:
     st.session_state["user_id"] = query_params["user_id"]
 else:
+    # If no user_id is found in the query params, generate a new one and store it
     st.session_state["user_id"] = str(uuid.uuid4())[:8]
-    st.query_params = {"user_id": st.session_state["user_id"]}
+    # Ensure the query params are updated (so user_id is always in the URL)
+    st.experimental_set_query_params(user_id=st.session_state["user_id"])
 
 # --- CONFIG (after user_id exists) ---
 SCRIPT_NAME = "pipeline.py"
