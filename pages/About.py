@@ -19,9 +19,11 @@ st.markdown("""
     letter-spacing: 2px;
 }
 
-/* Global font styling for all other text */
+/* Global font styling + font size adjustment */
 body, div, p, ul, li, h2, h3, h4, h5, h6, .stMarkdown {
     font-family: 'Questrial', sans-serif !important;
+    font-size: 14px !important;
+    line-height: 1.6;
 }
 </style>
 """, unsafe_allow_html=True)
