@@ -11,13 +11,6 @@ from collections import Counter
 import platform
 import re
 
-# --- CONFIG ---
-SCRIPT_NAME = "pipeline.py"
-SESSION_DIR = os.path.join("sessions", st.session_state["user_id"])
-os.makedirs(SESSION_DIR, exist_ok=True)
-
-st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
-
 # --- Assign or retrieve a persistent user_id ---
 query_params = st.query_params
 if "user_id" in query_params:
@@ -25,6 +18,13 @@ if "user_id" in query_params:
 else:
     st.session_state["user_id"] = str(uuid.uuid4())[:8]
     st.query_params = {"user_id": st.session_state["user_id"]}
+
+# --- CONFIG (after user_id exists) ---
+SCRIPT_NAME = "pipeline.py"
+SESSION_DIR = os.path.join("sessions", st.session_state["user_id"])  
+os.makedirs(SESSION_DIR, exist_ok=True)
+
+st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
