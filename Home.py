@@ -79,13 +79,20 @@ st.markdown("""
 
 # --- Admin tools for manual clean up (only show if admin checkbox enabled) ---
 if st.sidebar.checkbox("⚙️ Admin Tools"):
+    if "delete_clicked" not in st.session_state:
+        st.session_state.delete_clicked = False
+
     if st.sidebar.button("🚨 Delete ALL sessions (be careful)"):
         if os.path.exists("sessions"):
             shutil.rmtree("sessions")
-        os.makedirs("sessions", exist_ok=True)  # recreate base sessions folder
-        os.makedirs(SESSION_DIR, exist_ok=True)  # recreate user's own folder
-        st.sidebar.success("All sessions deleted! Fresh start.")
-        st.rerun()
+        os.makedirs("sessions", exist_ok=True)
+        os.makedirs(SESSION_DIR, exist_ok=True)
+        st.session_state.delete_clicked = True
+
+    if st.session_state.delete_clicked:
+        st.sidebar.success("✅ All sessions deleted! Fresh start.")
+        if st.sidebar.button("🔄 Click to refresh"):
+            st.rerun()
             
 # --- Load full vocabularies for dropdowns ---
 dutch_keywords, english_keywords = [], []
