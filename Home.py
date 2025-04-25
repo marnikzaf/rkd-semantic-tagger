@@ -91,9 +91,11 @@ def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
 session_path = None
+# --- Find only the user's saved sessions ---
+all_files = os.listdir(SESSION_DIR)
 saved_sessions = [
     f.replace(f"session_{st.session_state['user_id']}_", "").replace(".json", "")
-    for f in os.listdir(SESSION_DIR)
+    for f in all_files
     if f.startswith(f"session_{st.session_state['user_id']}_") and "_backup_" not in f
 ]
 
