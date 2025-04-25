@@ -16,7 +16,7 @@ SCRIPT_NAME = "pipeline.py"
 SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="semARTagger", page_icon=":art:", layout="wide")
 
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
