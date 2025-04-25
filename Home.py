@@ -96,15 +96,15 @@ if st.sidebar.checkbox("⚙️ Admin Tools"):
         if st.sidebar.button("🔄 Click to refresh"):
             st.rerun()
 
-   if st.sidebar.button("🔁 Start Fresh (new user)"):
+    if st.sidebar.button("🔁 Start Fresh (new user)"):
     # Clear session state
-    st.session_state.clear()
+       st.session_state.clear()
     
     # Assign a fresh user_id
-    st.session_state["user_id"] = str(uuid.uuid4())[:8]
+       st.session_state["user_id"] = str(uuid.uuid4())[:8]
     
     # Use JavaScript to reload the page
-    st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True)
+       st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True)
             
 # --- Load full vocabularies for dropdowns ---
 dutch_keywords, english_keywords = [], []
