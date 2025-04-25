@@ -81,8 +81,8 @@ if st.sidebar.checkbox("⚙️ Admin Tools"):
     if st.sidebar.button("🚨 Delete ALL sessions (be careful)"):
         if os.path.exists("sessions"):
             shutil.rmtree("sessions")
-        os.makedirs("sessions", exist_ok=True)  # Recreate base sessions folder
-        os.makedirs(SESSION_DIR, exist_ok=True)  # Recreate personal session folder
+        os.makedirs("sessions", exist_ok=True)  # recreate base sessions folder
+        os.makedirs(SESSION_DIR, exist_ok=True)  # recreate user's own folder
         st.sidebar.success("All sessions deleted! Fresh start.")
         st.rerun()
             
