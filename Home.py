@@ -188,6 +188,12 @@ elif mode == "Upload pre-tagged CSV":
     else:
         st.warning("Please upload a pre-tagged CSV file.")
 
+# --- Ensure session_state variables are initialized ---
+if "index" not in st.session_state:
+    st.session_state["index"] = 0
+if "edited_data" not in st.session_state:
+    st.session_state["edited_data"] = []
+
 # --- Auto-save function with timestamp ---
 def auto_save_session():
     if session_path:
