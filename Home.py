@@ -13,7 +13,7 @@ import re
 
 # --- CONFIG ---
 SCRIPT_NAME = "pipeline.py"
-SESSION_DIR = "sessions"
+SESSION_DIR = os.path.join("sessions", st.session_state["user_id"])
 os.makedirs(SESSION_DIR, exist_ok=True)
 
 st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
