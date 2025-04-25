@@ -136,6 +136,16 @@ else:
                 st.session_state.edited_data = data.get("edited_data", [])
             st.session_state["restored_session"] = session_name
 
+# --- Make sure essential session keys exist ---
+if "selected_en" not in st.session_state:
+    st.session_state.selected_en = []
+if "selected_nl" not in st.session_state:
+    st.session_state.selected_nl = []
+if "output_ready" not in st.session_state and session_name:
+    temp_output_path = f"temp_output_{session_name}.csv"
+    if os.path.exists(temp_output_path):
+        st.session_state["output_ready"] = temp_output_path
+
 if session_name and session_name != "(new session)":
     output_filename = f"temp_output_{session_name}.csv"
 else:
