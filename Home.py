@@ -12,7 +12,7 @@ import platform
 import re
 
 # --- CONFIG ---
-SCRIPT_NAME = "final_final_pipeline.py"
+SCRIPT_NAME = "pipeline.py"
 SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
