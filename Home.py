@@ -42,7 +42,7 @@ st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
     <style>
         *:not(.montserrat-title):not(.kaushan-title) { font-family: 'Questrial', sans-serif !important; }
-        html, body, [class*="css"] { font-size: 16px; line-height: 1.6; }
+        html, body, [class*="css"] { font-size: 14px; line-height: 1.6; }
         body { background-color: #111; color: #eee; }
         .stButton>button {
            background-color: transparent;
