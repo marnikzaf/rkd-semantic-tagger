@@ -9,8 +9,7 @@ import threading
 import datetime
 from collections import Counter
 import platform
-import re
-import shutil 
+import re 
 
 st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
@@ -76,35 +75,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# --- Admin tools for manual clean up (only show if admin checkbox enabled) ---
-if st.sidebar.checkbox("⚙️ Admin Tools"):
-    st.sidebar.caption(f"🆔 Current user ID: `{st.session_state['user_id']}`")
-
-    if "delete_clicked" not in st.session_state:
-        st.session_state.delete_clicked = False
-
-    if st.sidebar.button("🚨 Delete ALL sessions (be careful)"):
-        if os.path.exists("sessions"):
-            shutil.rmtree("sessions")
-        os.makedirs("sessions", exist_ok=True)
-        os.makedirs(SESSION_DIR, exist_ok=True)
-        st.session_state.delete_clicked = True
-
-    if st.session_state.delete_clicked:
-        st.sidebar.success("✅ All sessions deleted! Fresh start.")
-        if st.sidebar.button("🔄 Click to refresh"):
-            st.rerun()
-
-    if st.sidebar.button("🔁 Start Fresh (new user)"):
-    # Clear session state
-       st.session_state.clear()
-    
-    # Assign a fresh user_id
-       st.session_state["user_id"] = str(uuid.uuid4())[:8]
-    
-    # Use JavaScript to reload the page
-       st.markdown("<script>window.location.reload();</script>", unsafe_allow_html=True)
             
 # --- Load full vocabularies for dropdowns ---
 dutch_keywords, english_keywords = [], []
