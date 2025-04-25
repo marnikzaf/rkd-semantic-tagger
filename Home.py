@@ -145,9 +145,10 @@ if saved_sessions:
     st.sidebar.markdown("---")
     st.sidebar.caption("📁 Saved Sessions:")
     for s in sorted(saved_sessions):
-        path = os.path.join(SESSION_DIR, f"session_{s}.json")
-        timestamp = time.ctime(os.path.getmtime(path))
-        st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_)")
+        path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{s}.json")
+        if os.path.exists(path):  # ✅ Only show if file exists
+            timestamp = time.ctime(os.path.getmtime(path))
+            st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_")
 
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
 
