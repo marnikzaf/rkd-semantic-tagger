@@ -18,9 +18,6 @@ SCRIPT_NAME = "pipeline.py"
 SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
-# Set Desktop path for saving files
-desktop = os.path.join(os.path.expanduser("~"), "Desktop")
-
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
 <h1 class="kaushan-title" style='font-family: "Kaushan Script", cursive !important; font-size: 4rem; font-weight: 400; letter-spacing: 2px; margin-bottom: 0.5em;'>
@@ -84,6 +81,9 @@ except Exception as e:
 # --- Session Management ---
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
+
+SESSION_DIR = "sessions"
+os.makedirs(SESSION_DIR, exist_ok=True)
 
 # List saved sessions
 saved_sessions = [
@@ -152,7 +152,9 @@ else:
         st.session_state.index = data.get("index", 0)
         st.session_state.edited_data = data.get("edited_data", [])
 
-# --- Show saved sessions nicely ---
+# --- Now, output filename and show saved sessions list ---
+output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv") if session_name else None
+
 if saved_sessions:
     st.sidebar.markdown("---")
     st.sidebar.caption("📁 Saved Sessions:")
@@ -170,8 +172,8 @@ mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload p
 if mode == "Run tagging pipeline":
     uploaded_file = st.file_uploader("Upload your CSV file", type="csv", key="pipeline_upload")
     if uploaded_file:
-        input_filename = f"temp_input_{session_name}.csv"
-        output_filename = os.path.join(desktop, f"temp_output_{session_name}.csv")
+        input_filename = os.path.join(SESSION_DIR, f"temp_input_{session_name}.csv")
+        output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
 
         with open(input_filename, "wb") as f:
             f.write(uploaded_file.read())
@@ -199,11 +201,10 @@ if mode == "Run tagging pipeline":
 elif mode == "Upload pre-tagged CSV":
     pretagged_file = st.file_uploader("Upload a pre-tagged CSV file", type="csv", key="pretagged_upload")
     if pretagged_file:
-        output_filename = os.path.join(desktop, f"temp_output_{session_name}.csv")
+        output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
 
         with open(output_filename, "wb") as f:
             f.write(pretagged_file.read())
-
         st.session_state["output_ready"] = output_filename
         st.success("File uploaded and ready for review!")
     else:
