@@ -152,9 +152,7 @@ else:
         st.session_state.index = data.get("index", 0)
         st.session_state.edited_data = data.get("edited_data", [])
 
-# --- Now, output filename and show saved sessions list ---
-output_filename = os.path.join(desktop, f"temp_output_{session_name}.csv") if session_name else None
-
+# --- Show saved sessions nicely ---
 if saved_sessions:
     st.sidebar.markdown("---")
     st.sidebar.caption("📁 Saved Sessions:")
@@ -172,10 +170,9 @@ mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload p
 if mode == "Run tagging pipeline":
     uploaded_file = st.file_uploader("Upload your CSV file", type="csv", key="pipeline_upload")
     if uploaded_file:
-        # Build input and output filenames only when a file is uploaded
         input_filename = f"temp_input_{session_name}.csv"
         output_filename = os.path.join(desktop, f"temp_output_{session_name}.csv")
-        
+
         with open(input_filename, "wb") as f:
             f.write(uploaded_file.read())
 
@@ -202,11 +199,11 @@ if mode == "Run tagging pipeline":
 elif mode == "Upload pre-tagged CSV":
     pretagged_file = st.file_uploader("Upload a pre-tagged CSV file", type="csv", key="pretagged_upload")
     if pretagged_file:
-        # Build output filename now because user uploaded something
         output_filename = os.path.join(desktop, f"temp_output_{session_name}.csv")
-        
+
         with open(output_filename, "wb") as f:
             f.write(pretagged_file.read())
+
         st.session_state["output_ready"] = output_filename
         st.success("File uploaded and ready for review!")
     else:
