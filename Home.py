@@ -135,27 +135,33 @@ if session_name == "(new session)":
         with open(session_path, "w") as f:
             json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
 
-        # ⚡ IMMEDIATELY initialize session_state
+        # Initialize session state
         st.session_state.index = 0
         st.session_state.edited_data = []
-        st.session_state.session_select = session_name
 
-        st.sidebar.success(f"Session '{session_name}' created and ready!")
+        # Remember new session created
+        st.session_state["new_session_ready"] = session_name
+
+        st.sidebar.success(f"Session '{session_name}' created!")
         st.rerun()
     else:
         st.warning("Please enter a valid session name to create a new session.")
         st.stop()
-else:
-    session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
 
 # --- Load session if it exists ---
 if session_path and os.path.exists(session_path):
     with open(session_path, "r") as f:
         data = json.load(f)
+
     if "index" not in st.session_state:
         st.session_state.index = data.get("index", 0)
     if "edited_data" not in st.session_state:
         st.session_state.edited_data = data.get("edited_data", [])
+
+# --- After loading session, if a new one was just created
+if "new_session_ready" in st.session_state:
+    st.success(f"Now working in newly created session: `{st.session_state['new_session_ready']}`")
+    del st.session_state["new_session_ready"]
 
 # --- Make sure essential session keys exist ---
 if "selected_en" not in st.session_state:
