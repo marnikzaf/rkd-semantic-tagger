@@ -91,12 +91,12 @@ saved_sessions = [
     if f.startswith("session_") and "_backup_" not in f and os.path.isfile(os.path.join(SESSION_DIR, f))
 ]
 
-st.sidebar.subheader("Session Management")
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
-if session_to_delete != "None" and st.sidebar.button("\u274C Delete Session"):
+if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     try:
         os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
         st.sidebar.success(f"Deleted session: {session_to_delete}")
+        st.rerun() 
     except Exception as e:
         st.sidebar.error(f"Failed to delete: {e}")
 
