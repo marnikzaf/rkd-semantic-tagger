@@ -138,31 +138,20 @@ if session_name == "(new session)":
     if new_session_input:
         session_name = sanitize_filename(new_session_input)
         session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
+        
+        # Save the new session file
         with open(session_path, "w") as f:
             json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
+        
+        # 🆕 Force OS refresh to detect new file immediately
+        os.stat(SESSION_DIR)
+
         st.sidebar.success(f"Session '{session_name}' created and saved!")
-        # Set restored session
         st.session_state["restored_session"] = session_name
-        # Clear session_select so Streamlit won't crash
-        if "session_select" in st.session_state:
-            del st.session_state["session_select"]
         st.rerun()
     else:
         st.warning("Please enter a valid session name to create a new session.")
         st.stop()
-else:
-    session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
-    # --- Restore session state if changed ---
-    if (
-        "restored_session" not in st.session_state
-        or st.session_state["restored_session"] != session_name
-    ):
-        if os.path.exists(session_path):
-            with open(session_path, "r") as f:
-                data = json.load(f)
-                st.session_state.index = data.get("index", 0)
-                st.session_state.edited_data = data.get("edited_data", [])
-            st.session_state["restored_session"] = session_name
 
 if saved_sessions:
     st.sidebar.markdown("---")
