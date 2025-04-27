@@ -5,18 +5,21 @@ set -e
 
 echo "Starting post-installation script..."
 
-# Upgrade pip
+# Ensure the script uses the Python version from the virtual environment
+if [ -z "$VIRTUAL_ENV" ]; then
+  echo "Error: No active virtual environment detected."
+  echo "Please activate your virtual environment and re-run this script."
+  exit 1
+fi
+
+# Upgrade pip in the virtual environment
 echo "Upgrading pip..."
-python3 -m pip install --upgrade pip
+python -m pip install --upgrade pip
 
-# Fix permissions for site-packages directory
-echo "Fixing permissions for site-packages directory..."
-chmod -R u+w /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.13/site-packages/
-
-# Download spaCy models
+# Download spaCy models in the virtual environment
 echo "Downloading spaCy models..."
-python3 -m spacy download xx_ent_wiki_sm
-python3 -m spacy download nl_core_news_sm
-python3 -m spacy download fr_core_news_sm
+python -m spacy download xx_ent_wiki_sm
+python -m spacy download nl_core_news_sm
+python -m spacy download fr_core_news_sm
 
 echo "Post-installation script completed successfully."
