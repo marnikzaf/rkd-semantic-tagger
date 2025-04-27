@@ -130,8 +130,7 @@ session_name = st.sidebar.selectbox(
     options=["(new session)"] + saved_sessions,
     index=session_default_index,
     format_func=lambda x: "Create new session" if x == "(new session)" else x,
-    key="session_select"
-)
+    key=f"session_select_{len(saved_sessions)}"
 
 # --- Create new session ---
 if session_name == "(new session)":
