@@ -142,7 +142,11 @@ if session_name == "(new session)":
         with open(session_path, "w") as f:
             json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
         st.sidebar.success(f"Session '{session_name}' created and saved!")
+        # Set restored session
         st.session_state["restored_session"] = session_name
+        # Clear session_select so Streamlit won't crash
+        if "session_select" in st.session_state:
+            del st.session_state["session_select"]
         st.rerun()
     else:
         st.warning("Please enter a valid session name to create a new session.")
