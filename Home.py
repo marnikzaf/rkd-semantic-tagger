@@ -91,7 +91,7 @@ saved_sessions = [
     if f.startswith("session_") and "_backup_" not in f and os.path.isfile(os.path.join(SESSION_DIR, f))
 ]
 
-st.sidebar.subheader("\U0001F9D1 Session Management")
+st.sidebar.subheader("Session Management")
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
 if session_to_delete != "None" and st.sidebar.button("\u274C Delete Session"):
     try:
@@ -104,7 +104,7 @@ session_name = st.sidebar.selectbox(
     "Select or create a session",
     options=["(new session)"] + saved_sessions,
     index=0,
-    format_func=lambda x: "\U0001F195 Create new session" if x == "(new session)" else x
+    format_func=lambda x: "Create new session" if x == "(new session)" else x
 )
 
 session_path = None
