@@ -95,11 +95,15 @@ def sanitize_filename(name):
 session_path = None
 
 # --- List saved sessions
-saved_sessions = [
-    f.replace("session_", "").replace(".json", "")
-    for f in os.listdir(SESSION_DIR)
-    if f.startswith("session_") and "_backup_" not in f
-]
+def list_saved_sessions():
+    return [
+        f.replace("session_", "").replace(".json", "")
+        for f in os.listdir(SESSION_DIR)
+        if f.startswith("session_") and "_backup_" not in f
+    ]
+
+# --- Refresh saved sessions after possible session creation
+saved_sessions = list_saved_sessions()
 
 # --- Determine which session should be selected by default
 if "restored_session" in st.session_state:
