@@ -1,0 +1,28 @@
+name: Keep Site Alive + Notify if Down
+
+permissions:
+  issues: write  # Allow the workflow to create GitHub Issues
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # Run every day at 5:00 AM UTC
+  workflow_dispatch:     # Also allow manual trigger
+
+jobs:
+  ping-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install GitHub CLI
+        run: sudo apt install gh
+
+      - name: Ping site
+        id: ping
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://semartagger.streamlit.app/)
+          echo "HTTP_RESPONSE=$RESPONSE" >> $GITHUB_ENV
+
+      - name: Check response
+        if: env.HTTP_RESPONSE != '200'
+        run: |
+          echo "Site is DOWN with status $HTTP_RESPONSE"
+          gh issue create --title "🚨 Site Down Alert" --body "The site https://semartagger.streamlit.app/ is down. Status code: $HTTP_RESPONSE" --repo ${{ github.repository }}
