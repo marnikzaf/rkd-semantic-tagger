@@ -30,8 +30,17 @@ SIM_THRESHOLD = 0.3
 MIN_COMPONENT_LEN = 4
 
 # === Load models ===
+
+# Try loading the xx_ent_wiki_sm model, if missing: download it
+try:
+    nlp_ner = spacy.load("xx_ent_wiki_sm")
+except OSError:
+    from spacy.cli import download
+    download("xx_ent_wiki_sm")
+    nlp_ner = spacy.load("xx_ent_wiki_sm")
+
+# Load the other models normally
 labse = SentenceTransformer("sentence-transformers/LaBSE")
-nlp_ner = spacy.load("xx_ent_wiki_sm")
 nl_nlp = spacy.load("nl_core_news_sm")
 fr_nlp = spacy.load("fr_core_news_sm")
 
