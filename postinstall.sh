@@ -11,7 +11,7 @@ python3 -m pip install --upgrade pip
 
 # Fix permissions for site-packages directory
 echo "Fixing permissions for site-packages directory..."
-chmod -R u+w /Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/
+chmod -R u+w /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.13/site-packages/
 
 # Download spaCy models
 echo "Downloading spaCy models..."
