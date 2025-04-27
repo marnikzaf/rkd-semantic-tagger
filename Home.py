@@ -89,10 +89,10 @@ except Exception as e:
     st.error(f"Error loading keywords: {e}")
 
 # --- Session Picker with create/delete option ---
+
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
-# --- Find only the user's saved sessions ---
 session_path = None
 all_files = os.listdir(SESSION_DIR)
 saved_sessions = [
@@ -103,56 +103,54 @@ saved_sessions = [
 
 st.sidebar.subheader("Session Management")
 
-# --- Delete a session if requested ---
+# --- Delete a session ---
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
 if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     os.remove(os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_to_delete}.json"))
     st.sidebar.success(f"Deleted session: {session_to_delete}")
     st.rerun()
 
-# --- Select or create a session ---
-session_name = st.sidebar.selectbox(
-    "Select or create a session",
-    options=["(new session)"] + saved_sessions,
-    index=0,
-    format_func=lambda x: "Create new session" if x == "(new session)" else x,
-    key="session_select"
-)
+# --- Handle session selection ---
+if "forced_session_name" in st.session_state:
+    # 🆕 If we forced a session after rerun, use it
+    session_name = st.session_state.forced_session_name
+else:
+    session_name = st.sidebar.selectbox(
+        "Select or create a session",
+        options=["(new session)"] + saved_sessions,
+        index=0,
+        format_func=lambda x: "Create new session" if x == "(new session)" else x,
+        key="session_select"
+    )
 
+# --- Handle creating new session ---
 if session_name == "(new session)":
     new_session_input = st.sidebar.text_input("Enter a new session name")
     if new_session_input:
         session_name = sanitize_filename(new_session_input)
         session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
-        # --- Create new session file ---
         with open(session_path, "w") as f:
             json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
         st.sidebar.success(f"Session '{session_name}' created and saved!")
-        st.session_state["restored_session"] = session_name
-        st.session_state["new_session_created"] = True  # 🆕 Mark that a new session was just created
+        # 🆕 Set forced session and rerun
+        st.session_state.forced_session_name = session_name
         st.rerun()
     else:
         st.warning("Please enter a valid session name to create a new session.")
         st.stop()
 else:
     session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
-    # --- Normal session load if existing ---
-    if ("restored_session" not in st.session_state or st.session_state["restored_session"] != session_name):
-        if os.path.exists(session_path):
-            with open(session_path, "r") as f:
-                data = json.load(f)
-                st.session_state.index = data.get("index", 0)
-                st.session_state.edited_data = data.get("edited_data", [])
-            st.session_state["restored_session"] = session_name
 
-# --- Special case: if a new session was just created, load it manually ---
-if session_name and "new_session_created" in st.session_state:
-    if os.path.exists(session_path):
-        with open(session_path, "r") as f:
-            data = json.load(f)
-            st.session_state.index = data.get("index", 0)
-            st.session_state.edited_data = data.get("edited_data", [])
-    st.session_state.pop("new_session_created")  # 🧹 Clean the flag
+# --- Load session if it exists ---
+if session_path and os.path.exists(session_path):
+    with open(session_path, "r") as f:
+        data = json.load(f)
+    st.session_state.index = data.get("index", 0)
+    st.session_state.edited_data = data.get("edited_data", [])
+
+# --- After everything, clean up forced_session_name ---
+if "forced_session_name" in st.session_state:
+    st.session_state.pop("forced_session_name")
 
 # --- Make sure essential session keys exist ---
 if "selected_en" not in st.session_state:
