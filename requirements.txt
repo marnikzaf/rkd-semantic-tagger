@@ -7,4 +7,3 @@ tqdm
 langdetect
 sentence-transformers
 streamlit
-https://github.com/explosion/spacy-models/releases/download/xx_ent_wiki_sm-3.5.0/xx_ent_wiki_sm-3.5.0-py3-none-any.whl
