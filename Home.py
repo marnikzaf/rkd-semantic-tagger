@@ -88,14 +88,11 @@ try:
 except Exception as e:
     st.error(f"Error loading keywords: {e}")
 
-# --- Session Picker with create/delete option ---
-
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
 session_path = None
 
-# Function to refresh saved sessions
 def get_saved_sessions():
     all_files = os.listdir(SESSION_DIR)
     return [
@@ -104,7 +101,7 @@ def get_saved_sessions():
         if f.startswith(f"session_{st.session_state['user_id']}_") and "_backup_" not in f
     ]
 
-# --- Refresh saved sessions initially
+# --- Refresh session list
 saved_sessions = get_saved_sessions()
 
 st.sidebar.subheader("Session Management")
@@ -116,52 +113,41 @@ if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     st.sidebar.success(f"Deleted session: {session_to_delete}")
     st.rerun()
 
-# --- Select or create a session ---
+# --- Select or Create Session ---
 session_name = st.sidebar.selectbox(
     "Select or create a session",
     options=["(new session)"] + saved_sessions,
     index=0,
-    format_func=lambda x: "Create new session" if x == "(new session)" else x,
+    format_func=lambda x: "➕ Create new session" if x == "(new session)" else x,
     key="session_select"
 )
 
 if session_name == "(new session)":
-    new_session_input = st.sidebar.text_input("Enter a new session name")
+    new_session_input = st.sidebar.text_input("Enter a new session name", key="new_session_name_input")
     if new_session_input:
-        session_name = sanitize_filename(new_session_input)
+        session_name = sanitize_filename(new_session_input.strip())
         session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
 
-        # Create session file
-        with open(session_path, "w") as f:
-            json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
-
-        # Initialize session state
-        st.session_state.index = 0
-        st.session_state.edited_data = []
-
-        # Remember new session created
-        st.session_state["new_session_ready"] = session_name
-
-        st.sidebar.success(f"Session '{session_name}' created!")
+        if not os.path.exists(session_path):
+            with open(session_path, "w") as f:
+                json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
+            st.success(f"✅ Session '{session_name}' created successfully!")
+        else:
+            st.warning("⚠️ Session already exists.")
         st.rerun()
     else:
-        st.warning("Please enter a valid session name to create a new session.")
+        st.warning("Please enter a session name.")
         st.stop()
+else:
+    session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
 
-# --- Load session if it exists ---
+# --- Load existing session ---
 if session_path and os.path.exists(session_path):
     with open(session_path, "r") as f:
         data = json.load(f)
 
-    if "index" not in st.session_state:
-        st.session_state.index = data.get("index", 0)
-    if "edited_data" not in st.session_state:
-        st.session_state.edited_data = data.get("edited_data", [])
-
-# --- After loading session, if a new one was just created
-if "new_session_ready" in st.session_state:
-    st.success(f"Now working in newly created session: `{st.session_state['new_session_ready']}`")
-    del st.session_state["new_session_ready"]
+    st.session_state.index = data.get("index", 0)
+    st.session_state.edited_data = data.get("edited_data", [])
 
 # --- Make sure essential session keys exist ---
 if "selected_en" not in st.session_state:
