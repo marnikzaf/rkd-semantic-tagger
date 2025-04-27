@@ -117,10 +117,19 @@ if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     st.rerun()
 
 # --- Select or create a session ---
+# If new session just created, remember it
+default_session_name = st.session_state.get("new_session_name", None)
+
+session_options = ["(new session)"] + saved_sessions
+if default_session_name and default_session_name in saved_sessions:
+    default_index = session_options.index(default_session_name)
+else:
+    default_index = 0
+
 session_name = st.sidebar.selectbox(
     "Select or create a session",
-    options=["(new session)"] + saved_sessions,
-    index=0,
+    options=session_options,
+    index=default_index,
     format_func=lambda x: "Create new session" if x == "(new session)" else x,
     key="session_select"
 )
@@ -136,11 +145,9 @@ if session_name == "(new session)":
         with open(session_path, "w") as f:
             json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
         
-        # Manually update session list and select the new session
-        saved_sessions = get_saved_sessions()
-        st.session_state.session_select = session_name  # Select the new one
-        
-        st.sidebar.success(f"Session '{session_name}' created and selected!")
+        # Set flag to pre-select this new session on next rerun
+        st.session_state["new_session_name"] = session_name
+        st.sidebar.success(f"Session '{session_name}' created!")
         st.rerun()
     else:
         st.warning("Please enter a valid session name to create a new session.")
@@ -154,6 +161,11 @@ if session_path and os.path.exists(session_path):
         data = json.load(f)
     st.session_state.index = data.get("index", 0)
     st.session_state.edited_data = data.get("edited_data", [])
+
+# --- Clean up "new session" flag after loading ---
+if "new_session_name" in st.session_state:
+    st.success(f"Now working in session: `{st.session_state['new_session_name']}`")
+    del st.session_state["new_session_name"]
 
 # --- Make sure essential session keys exist ---
 if "selected_en" not in st.session_state:
