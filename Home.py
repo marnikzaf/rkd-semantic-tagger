@@ -142,15 +142,26 @@ else:
             data = json.load(f)
 
         if "session_key" in data:
-            session_key_input = st.sidebar.text_input("Enter session key to unlock", type="password")
+            if "session_key_verified" not in st.session_state:
+                st.session_state.session_key_verified = False
 
-            if session_key_input != data["session_key"]:
-                st.error("Invalid session key. Access denied.")
-                st.stop()
-
-        # --- Load session data if correct
-        st.session_state.index = data.get("index", 0)
-        st.session_state.edited_data = data.get("edited_data", [])
+            if not st.session_state.session_key_verified:
+                session_key_input = st.sidebar.text_input("Enter session key to unlock", type="password")
+                if st.sidebar.button("Unlock Session"):
+                    if session_key_input == data["session_key"]:
+                        st.session_state.session_key_verified = True
+                        st.success("Session unlocked!")
+                        st.rerun()
+                    else:
+                        st.error("Invalid session key. Please try again.")
+                        st.stop()
+            else:
+                st.session_state.index = data.get("index", 0)
+                st.session_state.edited_data = data.get("edited_data", [])
+        else:
+            # No password protection
+            st.session_state.index = data.get("index", 0)
+            st.session_state.edited_data = data.get("edited_data", [])
 
 # --- Now, output filename and show saved sessions list ---
 output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv") if session_name else None
