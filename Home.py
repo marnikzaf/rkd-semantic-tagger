@@ -10,6 +10,7 @@ import datetime
 from collections import Counter
 import platform
 import re 
+import sys
 
 st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
