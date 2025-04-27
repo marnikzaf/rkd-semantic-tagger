@@ -159,7 +159,6 @@ else:
                 st.session_state.index = data.get("index", 0)
                 st.session_state.edited_data = data.get("edited_data", [])
         else:
-            # No password protection
             st.session_state.index = data.get("index", 0)
             st.session_state.edited_data = data.get("edited_data", [])
 
@@ -195,7 +194,7 @@ if mode == "Run tagging pipeline":
             with st.spinner("Running the tagging pipeline..."):
                 try:
                     result = subprocess.run(
-                        ["python", SCRIPT_NAME, input_filename, output_filename],
+                        [sys.executable, SCRIPT_NAME, input_filename, output_filename],
                         capture_output=True,
                         text=True,
                     )
@@ -213,7 +212,6 @@ elif mode == "Upload pre-tagged CSV":
     pretagged_file = st.file_uploader("Upload a pre-tagged CSV file", type="csv", key="pretagged_upload")
     if pretagged_file:
         output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
-
         with open(output_filename, "wb") as f:
             f.write(pretagged_file.read())
         st.session_state["output_ready"] = output_filename
