@@ -85,6 +85,7 @@ except Exception as e:
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
+# List saved sessions
 saved_sessions = [
     f.replace("session_", "").replace(".json", "")
     for f in os.listdir(SESSION_DIR)
@@ -93,6 +94,7 @@ saved_sessions = [
 
 st.sidebar.subheader("Session Management")
 
+# --- Delete session ---
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
 if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     try:
@@ -102,6 +104,7 @@ if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     except Exception as e:
         st.sidebar.error(f"Failed to delete: {e}")
 
+# --- Select or Create Session ---
 session_name = st.sidebar.selectbox(
     "Select or create a session",
     options=["(new session)"] + saved_sessions,
@@ -109,7 +112,7 @@ session_name = st.sidebar.selectbox(
     format_func=lambda x: "Create new session" if x == "(new session)" else x
 )
 
-# --- Session creation or loading ---
+# --- Create or Unlock session ---
 session_path = None
 if session_name == "(new session)":
     new_session_input = st.sidebar.text_input("Enter a new session name")
@@ -140,23 +143,33 @@ else:
 
         if "session_key" in data:
             session_key_input = st.sidebar.text_input("Enter session key to unlock", type="password")
+
             if session_key_input != data["session_key"]:
                 st.error("Invalid session key. Access denied.")
                 st.stop()
 
+        # --- Load session data if correct
         st.session_state.index = data.get("index", 0)
         st.session_state.edited_data = data.get("edited_data", [])
 
+# --- Now, output filename and show saved sessions list ---
 output_filename = os.path.join(desktop, f"temp_output_{session_name}.csv") if session_name else None
 
 if saved_sessions:
     st.sidebar.markdown("---")
-    st.sidebar.caption("\U0001F4C1 Saved Sessions:")
+    st.sidebar.caption("📁 Saved Sessions:")
     for s in sorted(saved_sessions):
-        path = os.path.join(SESSION_DIR, f"session_{s}.json")
-        timestamp = time.ctime(os.path.getmtime(path))
-        st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_")
+        try:
+            path = os.path.join(SESSION_DIR, f"session_{s}.json")
+            timestamp = time.ctime(os.path.getmtime(path))
+            st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_")
+        except FileNotFoundError:
+            continue
 
+# --- NOW select mode ---
+mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
+
+# --- Continue your logic ---
 if mode == "Run tagging pipeline":
     uploaded_file = st.file_uploader("Upload your CSV file", type="csv", key="pipeline_upload")
     if uploaded_file:
