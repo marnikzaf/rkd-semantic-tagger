@@ -94,14 +94,14 @@ def sanitize_filename(name):
 
 session_path = None
 saved_sessions = [
-    f.replace("session_", "").replace(".json", "")
+    f.replace(f"session_{st.session_state['user_id']}_", "").replace(".json", "")
     for f in os.listdir(SESSION_DIR)
-    if f.startswith("session_") and "_backup_" not in f
+    if f.startswith(f"session_{st.session_state['user_id']}_") and "_backup_" not in f
 ]
 st.sidebar.subheader("Session Management")
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
 if session_to_delete != "None" and st.sidebar.button("Delete Session"):
-    os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
+    os.remove(os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_to_delete}.json"))
     st.sidebar.success(f"Deleted session: {session_to_delete}")
     st.rerun()
 
@@ -118,7 +118,7 @@ if session_name == "(new session)":
     new_session_input = st.sidebar.text_input("Enter a new session name")
     if new_session_input:
         session_name = sanitize_filename(new_session_input)
-        session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
+        session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
         with open(session_path, "w") as f:
             json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
         st.sidebar.success(f"Session '{session_name}' created and saved!")
@@ -128,7 +128,7 @@ if session_name == "(new session)":
         st.warning("Please enter a valid session name to create a new session.")
         st.stop()
 else:
-    session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
+    session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
     # --- Restore session state if changed ---
     if (
         "restored_session" not in st.session_state
@@ -140,11 +140,6 @@ else:
                 st.session_state.index = data.get("index", 0)
                 st.session_state.edited_data = data.get("edited_data", [])
             st.session_state["restored_session"] = session_name
-
-if session_name and session_name != "(new session)":
-    output_filename = f"temp_output_{session_name}.csv"
-else:
-    output_filename = None
 
 if saved_sessions:
     st.sidebar.markdown("---")
