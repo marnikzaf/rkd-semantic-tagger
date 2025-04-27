@@ -13,20 +13,13 @@ import re
 
 st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
-# --- Assign or retrieve a persistent user_id ---
-query_params = st.query_params
-
-# If there's a user_id in the query params, assign it to session state
-if "user_id" in query_params:
-    st.session_state["user_id"] = query_params["user_id"]
-else:
-    # If no user_id is found in the query params, generate a new one and store it
-    st.session_state["user_id"] = str(uuid.uuid4())[:8]
-
-# --- CONFIG (after user_id exists) ---
+# --- CONFIG ---
 SCRIPT_NAME = "pipeline.py"
-SESSION_DIR = os.path.join("sessions", st.session_state["user_id"])
+SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
+
+# Set Desktop path for saving files
+desktop = os.path.join(os.path.expanduser("~"), "Desktop")
 
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
@@ -78,7 +71,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
             
-# --- Load full vocabularies for dropdowns ---
+# --- Load vocabularies ---
 dutch_keywords, english_keywords = [], []
 try:
     dutch_terms = pd.read_csv("SUBJECT_all_terms_DUTCH.csv")
@@ -88,78 +81,57 @@ try:
 except Exception as e:
     st.error(f"Error loading keywords: {e}")
 
-# --- Session Picker with delete option ---
+# --- Session Management ---
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
-session_path = None
+saved_sessions = [
+    f.replace("session_", "").replace(".json", "")
+    for f in os.listdir(SESSION_DIR)
+    if f.startswith("session_") and "_backup_" not in f and os.path.isfile(os.path.join(SESSION_DIR, f))
+]
 
-# --- List saved sessions
-def list_saved_sessions():
-    return [
-        f.replace("session_", "").replace(".json", "")
-        for f in os.listdir(SESSION_DIR)
-        if f.startswith("session_") and "_backup_" not in f
-    ]
-
-# --- Refresh saved sessions after possible session creation
-saved_sessions = list_saved_sessions()
-
-# --- Determine which session should be selected by default
-if "restored_session" in st.session_state:
-    default_session = st.session_state["restored_session"]
-    if default_session in saved_sessions:
-        session_default_index = saved_sessions.index(default_session) + 1  # +1 because of "(new session)"
-    else:
-        session_default_index = 0
-else:
-    session_default_index = 0
-
-st.sidebar.subheader("Session Management")
-
-# --- Delete a session ---
+st.sidebar.subheader("\U0001F9D1 Session Management")
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
-if session_to_delete != "None" and st.sidebar.button("Delete Session"):
-    os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
-    st.sidebar.success(f"Deleted session: {session_to_delete}")
-    st.rerun()
+if session_to_delete != "None" and st.sidebar.button("\u274C Delete Session"):
+    try:
+        os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
+        st.sidebar.success(f"Deleted session: {session_to_delete}")
+    except Exception as e:
+        st.sidebar.error(f"Failed to delete: {e}")
 
-# --- Select or create a session ---
 session_name = st.sidebar.selectbox(
     "Select or create a session",
     options=["(new session)"] + saved_sessions,
-    index=session_default_index,
-    format_func=lambda x: "Create new session" if x == "(new session)" else x,
-    key=f"session_select_{len(saved_sessions)}")
+    index=0,
+    format_func=lambda x: "\U0001F195 Create new session" if x == "(new session)" else x
+)
 
-# --- Create new session ---
+session_path = None
 if session_name == "(new session)":
     new_session_input = st.sidebar.text_input("Enter a new session name")
     if new_session_input:
         session_name = sanitize_filename(new_session_input)
         session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
-        
-        # Save the new session file
         with open(session_path, "w") as f:
             json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
-        
-        # 🆕 Force OS refresh to detect new file immediately
-        os.stat(SESSION_DIR)
+        st.sidebar.success(f"Session '{session_name}' created!")
+else:
+    session_name = sanitize_filename(session_name)
+    session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
 
-        st.sidebar.success(f"Session '{session_name}' created and saved!")
-        st.session_state["restored_session"] = session_name
-        st.rerun()
-    else:
-        st.warning("Please enter a valid session name to create a new session.")
-        st.stop()
+output_filename = os.path.join(desktop, f"temp_output_{session_name}.csv") if session_name else None
 
 if saved_sessions:
     st.sidebar.markdown("---")
-    st.sidebar.caption("📁 Saved Sessions:")
+    st.sidebar.caption("\U0001F4C1 Saved Sessions:")
     for s in sorted(saved_sessions):
-        path = os.path.join(SESSION_DIR, f"session_{s}.json")
-        timestamp = time.ctime(os.path.getmtime(path))
-        st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_)")
+        try:
+            path = os.path.join(SESSION_DIR, f"session_{s}.json")
+            timestamp = time.ctime(os.path.getmtime(path))
+            st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_")
+        except FileNotFoundError:
+            continue
 
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
 
