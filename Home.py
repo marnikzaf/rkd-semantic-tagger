@@ -94,12 +94,18 @@ def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
 session_path = None
-all_files = os.listdir(SESSION_DIR)
-saved_sessions = [
-    f.replace(f"session_{st.session_state['user_id']}_", "").replace(".json", "")
-    for f in all_files
-    if f.startswith(f"session_{st.session_state['user_id']}_") and "_backup_" not in f
-]
+
+# Function to refresh saved sessions
+def get_saved_sessions():
+    all_files = os.listdir(SESSION_DIR)
+    return [
+        f.replace(f"session_{st.session_state['user_id']}_", "").replace(".json", "")
+        for f in all_files
+        if f.startswith(f"session_{st.session_state['user_id']}_") and "_backup_" not in f
+    ]
+
+# --- Refresh saved sessions initially
+saved_sessions = get_saved_sessions()
 
 st.sidebar.subheader("Session Management")
 
@@ -110,18 +116,14 @@ if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     st.sidebar.success(f"Deleted session: {session_to_delete}")
     st.rerun()
 
-# --- Handle session selection ---
-if "forced_session_name" in st.session_state:
-    # 🆕 If we forced a session after rerun, use it
-    session_name = st.session_state.forced_session_name
-else:
-    session_name = st.sidebar.selectbox(
-        "Select or create a session",
-        options=["(new session)"] + saved_sessions,
-        index=0,
-        format_func=lambda x: "Create new session" if x == "(new session)" else x,
-        key="session_select"
-    )
+# --- Select or create a session ---
+session_name = st.sidebar.selectbox(
+    "Select or create a session",
+    options=["(new session)"] + saved_sessions,
+    index=0,
+    format_func=lambda x: "Create new session" if x == "(new session)" else x,
+    key="session_select"
+)
 
 # --- Handle creating new session ---
 if session_name == "(new session)":
@@ -129,11 +131,16 @@ if session_name == "(new session)":
     if new_session_input:
         session_name = sanitize_filename(new_session_input)
         session_path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{session_name}.json")
+        
+        # Create session file
         with open(session_path, "w") as f:
             json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
-        st.sidebar.success(f"Session '{session_name}' created and saved!")
-        # 🆕 Set forced session and rerun
-        st.session_state.forced_session_name = session_name
+        
+        # Manually update session list and select the new session
+        saved_sessions = get_saved_sessions()
+        st.session_state.session_select = session_name  # Select the new one
+        
+        st.sidebar.success(f"Session '{session_name}' created and selected!")
         st.rerun()
     else:
         st.warning("Please enter a valid session name to create a new session.")
@@ -147,10 +154,6 @@ if session_path and os.path.exists(session_path):
         data = json.load(f)
     st.session_state.index = data.get("index", 0)
     st.session_state.edited_data = data.get("edited_data", [])
-
-# --- After everything, clean up forced_session_name ---
-if "forced_session_name" in st.session_state:
-    st.session_state.pop("forced_session_name")
 
 # --- Make sure essential session keys exist ---
 if "selected_en" not in st.session_state:
@@ -172,7 +175,7 @@ if saved_sessions:
     st.sidebar.caption("📁 Saved Sessions:")
     for s in sorted(saved_sessions):
         path = os.path.join(SESSION_DIR, f"session_{st.session_state['user_id']}_{s}.json")
-        if os.path.exists(path):  # ✅ Only show if file exists
+        if os.path.exists(path):
             timestamp = time.ctime(os.path.getmtime(path))
             st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_")
 
