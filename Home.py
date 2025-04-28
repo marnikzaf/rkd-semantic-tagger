@@ -276,7 +276,7 @@ if session_path and "output_ready" in st.session_state:
                 "index": st.session_state.index,
                 "edited_data": st.session_state.edited_data,
             }, f)
-        st.sidebar.success("✅ Session saved!")
+        st.sidebar.success("Session saved!")
         st.session_state["last_autosave"] = datetime.datetime.now().strftime("%H:%M:%S")
     st.sidebar.button("💾 Save Session", on_click=save_session)
 
@@ -293,7 +293,7 @@ if session_path and "output_ready" in st.session_state:
             export_df = pd.DataFrame(st.session_state.edited_data)
             export_df.to_csv(export_filename, index=False)
             with open(export_filename, "rb") as f:
-                st.sidebar.download_button("⬇️ Download CSV", f, file_name=export_filename, mime="text/csv")
+                st.sidebar.download_button("Download CSV", f, file_name=export_filename, mime="text/csv")
         else:
             st.sidebar.warning("No edited data to export yet!")
 
