@@ -4,9 +4,6 @@ subprocess-run
 torch
 sentence-transformers
 spacy
-xx-ent-wiki-sm @ https://github.com/explosion/spacy-models/releases/download/v3.5.0/xx_ent_wiki_sm-3.5.0.tar.gz
-nl-core-news-sm @ https://github.com/explosion/spacy-models/releases/download/v3.5.0/nl_core_news_sm-3.5.0.tar.gz
-fr-core-news-sm @ https://github.com/explosion/spacy-models/releases/download/v3.5.0/fr_core_news_sm-3.5.0.tar.gz
 tqdm
 langdetect
 joblib
