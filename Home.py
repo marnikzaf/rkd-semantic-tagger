@@ -148,7 +148,7 @@ else:
                 st.session_state.edited_data = data.get("edited_data", [])
             st.session_state["restored_session"] = session_name
 
-output_filename = f"temp_output_{session_name}.csv" if session_name else None
+output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
 
 # --- Select mode ---
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
