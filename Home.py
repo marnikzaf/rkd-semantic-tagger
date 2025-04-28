@@ -11,19 +11,6 @@ from collections import Counter
 import platform
 import re 
 import sys
-import spacy
-
-# List of spaCy models to install
-models = ["xx_ent_wiki_sm", "nl_core_news_sm", "fr_core_news_sm"]
-
-for model in models:
-    try:
-        spacy.load(model)
-        print(f"Model '{model}' is already installed.")
-    except OSError:
-        print(f"Model '{model}' not found. Installing...")
-        subprocess.run([sys.executable, "-m", "spacy", "download", model, "--user"], check=True)
-        print(f"Model '{model}' installed successfully.")
         
 st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
