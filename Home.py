@@ -9,7 +9,10 @@ import threading
 import datetime
 from collections import Counter
 import platform
-import re
+import re 
+import sys
+
+st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
 # --- CONFIG ---
 SCRIPT_NAME = "pipeline.py"
@@ -17,68 +20,56 @@ SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Over+the+Rainbow&display=swap" rel="stylesheet">
-<h1 class="overtherainbow-title" style='
-    font-family: "Over the Rainbow", cursive !important;
-    font-size: 4rem;
-    font-weight: 400;
-    letter-spacing: 2px;
-    margin-bottom: 0.5em;
-'>
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
+<h1 class="kaushan-title" style='font-family: "Kaushan Script", cursive !important; font-size: 4rem; font-weight: 400; letter-spacing: 2px; margin-bottom: 0.5em;'>
     semARTagger
 </h1>
 <style>
-body, html {
-    background-color: #000 !important;
-}
-.overtherainbow-title {
-    font-family: 'Over the Rainbow', cursive !important;
+.kaushan-title {
+    font-family: 'Kaushan Script', cursive !important;
     font-weight: 400 !important;
     letter-spacing: 2px;
-    /* No text-shadow */
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Load Questrial font from Google Fonts and force it everywhere ---
 st.markdown("""
-    <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
-    <style>
-        *:not(.montserrat-title):not(.overtherainbow-title) { font-family: 'Questrial', sans-serif !important; }
-        html, body, [class*="css"] { font-size: 16px; line-height: 1.6; }
-        body { background-color: #111; color: #eee; }
-        .stButton>button {
-           background-color: transparent;
-           color: inherit;
-           font-size: 13px !important;
-           padding: 8px 16px;
-           border: 1px solid currentColor;
-           border-radius: 8px;
-           cursor: pointer;
-           white-space: nowrap !important;
-        }
-        .stButton>button:hover { background-color: rgba(255, 255, 255, 0.1); }
-        .stTextInput input, .stTextArea textarea,
-        .stMultiselect>div>div>input, .stSelectbox>div>div>input {
-           padding: 8px;
-           border-radius: 5px;
-           border: 1px solid #888;
-           background-color: inherit;
-           color: inherit;
-        }
-        /* Make all sidebar labels bigger */
-        [data-testid="stSidebar"] label {
-            font-size: 15px !important;
-            font-weight: 600 !important;
-        }
-        .montserrat-title {
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 700 !important;
-        }
-    </style>
+<link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
+<style>
+    *:not(.montserrat-title):not(.kaushan-title) { font-family: 'Questrial', sans-serif !important; }
+    html, body, [class*="css"] { font-size: 14px; line-height: 1.6; }
+    body { background-color: #111; color: #eee; }
+    .stButton>button {
+       background-color: transparent;
+       color: inherit;
+       font-size: 13px !important;
+       padding: 8px 16px;
+       border: 1px solid currentColor;
+       border-radius: 8px;
+       cursor: pointer;
+       white-space: nowrap !important;
+    }
+    .stButton>button:hover { background-color: rgba(255, 255, 255, 0.1); }
+    .stTextInput input, .stTextArea textarea,
+    .stMultiselect>div>div>input, .stSelectbox>div>div>input {
+       padding: 8px;
+       border-radius: 5px;
+       border: 1px solid #888;
+       background-color: inherit;
+       color: inherit;
+    }
+    [data-testid="stSidebar"] label {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }
+    .montserrat-title {
+        font-family: 'Montserrat', sans-serif !important;
+        font-weight: 700 !important;
+    }
+</style>
 """, unsafe_allow_html=True)
-
-# --- Load full vocabularies for dropdowns ---
+            
+# --- Load vocabularies ---
 dutch_keywords, english_keywords = [], []
 try:
     dutch_terms = pd.read_csv("SUBJECT_all_terms_DUTCH.csv")
@@ -88,86 +79,123 @@ try:
 except Exception as e:
     st.error(f"Error loading keywords: {e}")
 
-# --- Session Picker with delete option ---
+# --- Session Management ---
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
-session_path = None
+SESSION_DIR = "sessions"
+os.makedirs(SESSION_DIR, exist_ok=True)
+
+# List saved sessions
 saved_sessions = [
     f.replace("session_", "").replace(".json", "")
     for f in os.listdir(SESSION_DIR)
-    if f.startswith("session_") and "_backup_" not in f
+    if f.startswith("session_") and "_backup_" not in f and os.path.isfile(os.path.join(SESSION_DIR, f))
 ]
-st.sidebar.subheader("SESSION MANAGEMENT")
+
+st.sidebar.subheader("Session Management")
+
+# --- Delete session ---
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
 if session_to_delete != "None" and st.sidebar.button("Delete Session"):
-    os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
-    st.sidebar.success(f"Deleted session: {session_to_delete}")
-    st.rerun()
+    try:
+        os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
+        st.sidebar.success(f"Deleted session: {session_to_delete}")
+        st.rerun()
+    except Exception as e:
+        st.sidebar.error(f"Failed to delete: {e}")
 
-# --- Session selection and restore ---
+# --- Select or Create Session ---
 session_name = st.sidebar.selectbox(
     "Select or create a session",
     options=["(new session)"] + saved_sessions,
     index=0,
-    format_func=lambda x: "Create new session" if x == "(new session)" else x,
-    key="session_select"
+    format_func=lambda x: "Create new session" if x == "(new session)" else x
 )
 
+# --- Create or Unlock session ---
+session_path = None
 if session_name == "(new session)":
     new_session_input = st.sidebar.text_input("Enter a new session name")
-    if new_session_input:
+    new_session_key = st.sidebar.text_input("Set a session key (password)", type="password")
+
+    if new_session_input and new_session_key:
         session_name = sanitize_filename(new_session_input)
         session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
         with open(session_path, "w") as f:
-            json.dump({"index": 0, "edited_data": [], "metadata_cols": []}, f)
-        st.sidebar.success(f"Session '{session_name}' created and saved!")
-        st.session_state["restored_session"] = session_name
+            json.dump({
+                "index": 0,
+                "edited_data": [],
+                "metadata_cols": [],
+                "session_key": new_session_key
+            }, f)
+        st.sidebar.success(f"Session '{session_name}' created!")
         st.rerun()
-    else:
-        st.warning("Please enter a valid session name to create a new session.")
+    elif new_session_input:
+        st.warning("Please also set a session key to create the session.")
         st.stop()
 else:
+    session_name = sanitize_filename(session_name)
     session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
-    # --- Restore session state if changed ---
-    if (
-        "restored_session" not in st.session_state
-        or st.session_state["restored_session"] != session_name
-    ):
-        if os.path.exists(session_path):
-            with open(session_path, "r") as f:
-                data = json.load(f)
+
+    if session_path and os.path.exists(session_path):
+        with open(session_path, "r") as f:
+            data = json.load(f)
+
+        if "session_key" in data:
+            if "session_key_verified" not in st.session_state:
+                st.session_state.session_key_verified = False
+
+            if not st.session_state.session_key_verified:
+                session_key_input = st.sidebar.text_input("Enter session key to unlock", type="password")
+                if st.sidebar.button("Unlock Session"):
+                    if session_key_input == data["session_key"]:
+                        st.session_state.session_key_verified = True
+                        st.success("Session unlocked!")
+                        st.rerun()
+                    else:
+                        st.error("Invalid session key. Please try again.")
+                        st.stop()
+            else:
                 st.session_state.index = data.get("index", 0)
                 st.session_state.edited_data = data.get("edited_data", [])
-            st.session_state["restored_session"] = session_name
+        else:
+            st.session_state.index = data.get("index", 0)
+            st.session_state.edited_data = data.get("edited_data", [])
 
-if session_name and session_name != "(new session)":
-    output_filename = f"temp_output_{session_name}.csv"
-else:
-    output_filename = None
+# --- Now, output filename and show saved sessions list ---
+output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv") if session_name else None
 
 if saved_sessions:
     st.sidebar.markdown("---")
     st.sidebar.caption("📁 Saved Sessions:")
     for s in sorted(saved_sessions):
-        path = os.path.join(SESSION_DIR, f"session_{s}.json")
-        timestamp = time.ctime(os.path.getmtime(path))
-        st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_)")
+        try:
+            path = os.path.join(SESSION_DIR, f"session_{s}.json")
+            timestamp = time.ctime(os.path.getmtime(path))
+            st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_")
+        except FileNotFoundError:
+            continue
 
+# --- Select mode ---
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
 
 if mode == "Run tagging pipeline":
     uploaded_file = st.file_uploader("Upload your CSV file", type="csv", key="pipeline_upload")
     if uploaded_file:
-        input_filename = f"temp_input_{session_name}.csv"
+        input_filename = os.path.join(SESSION_DIR, f"temp_input_{session_name}.csv")
+        output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
+
         with open(input_filename, "wb") as f:
             f.write(uploaded_file.read())
+
         output_name = st.text_input("Name your output CSV (for download only)", value="tagged_output")
+
         if st.button("Run Tagging Pipeline"):
             with st.spinner("Running the tagging pipeline..."):
                 try:
                     result = subprocess.run(
-                        ["python", SCRIPT_NAME, input_filename, output_filename],
+                        [sys.executable, SCRIPT_NAME, input_filename, output_filename],
                         capture_output=True,
                         text=True,
                     )
@@ -184,6 +212,7 @@ if mode == "Run tagging pipeline":
 elif mode == "Upload pre-tagged CSV":
     pretagged_file = st.file_uploader("Upload a pre-tagged CSV file", type="csv", key="pretagged_upload")
     if pretagged_file:
+        output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
         with open(output_filename, "wb") as f:
             f.write(pretagged_file.read())
         st.session_state["output_ready"] = output_filename
@@ -191,9 +220,15 @@ elif mode == "Upload pre-tagged CSV":
     else:
         st.warning("Please upload a pre-tagged CSV file.")
 
+# --- Ensure session_state variables are initialized ---
+if "index" not in st.session_state:
+    st.session_state["index"] = 0
+if "edited_data" not in st.session_state:
+    st.session_state["edited_data"] = []
+
 # --- Auto-save function with timestamp ---
 def auto_save_session():
-    if session_path and "index" in st.session_state and "edited_data" in st.session_state:
+    if session_path:
         with open(session_path, "w") as f:
             json.dump({
                 "index": st.session_state.index,
@@ -241,7 +276,7 @@ if session_path and "output_ready" in st.session_state:
                 "index": st.session_state.index,
                 "edited_data": st.session_state.edited_data,
             }, f)
-        st.sidebar.success("Session saved!")
+        st.sidebar.success("✅ Session saved!")
         st.session_state["last_autosave"] = datetime.datetime.now().strftime("%H:%M:%S")
     st.sidebar.button("💾 Save Session", on_click=save_session)
 
@@ -258,7 +293,7 @@ if session_path and "output_ready" in st.session_state:
             export_df = pd.DataFrame(st.session_state.edited_data)
             export_df.to_csv(export_filename, index=False)
             with open(export_filename, "rb") as f:
-                st.sidebar.download_button("Download CSV", f, file_name=export_filename, mime="text/csv")
+                st.sidebar.download_button("⬇️ Download CSV", f, file_name=export_filename, mime="text/csv")
         else:
             st.sidebar.warning("No edited data to export yet!")
 
