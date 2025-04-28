@@ -156,7 +156,7 @@ elif session_name:
         session_data = load_session_data(session_path)
         expected_key = session_data.get("session_key")
 
-        # 🛠 After refresh: check if current_session_key matches expected
+        # After refresh: check if current_session_key matches expected
         if (
             st.session_state.get("current_session_key") == expected_key and
             st.session_state.get("current_session_key") is not None
