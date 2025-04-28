@@ -83,8 +83,13 @@ except Exception as e:
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
-SESSION_DIR = "sessions"
-os.makedirs(SESSION_DIR, exist_ok=True)
+# --- Initialize session_state variables if not already ---
+if "current_session_name" not in st.session_state:
+    st.session_state["current_session_name"] = None
+if "current_session_key" not in st.session_state:
+    st.session_state["current_session_key"] = None
+if "session_key_verified" not in st.session_state:
+    st.session_state["session_key_verified"] = False
 
 # List saved sessions
 saved_sessions = [
@@ -113,8 +118,9 @@ session_name = st.sidebar.selectbox(
     format_func=lambda x: "Create new session" if x == "(new session)" else x
 )
 
-# --- Create or Unlock session ---
 session_path = None
+
+# --- Create New Session ---
 if session_name == "(new session)":
     new_session_input = st.sidebar.text_input("Enter a new session name")
     new_session_key = st.sidebar.text_input("Set a session key (password)", type="password")
@@ -134,48 +140,49 @@ if session_name == "(new session)":
     elif new_session_input:
         st.warning("Please also set a session key to create the session.")
         st.stop()
+
+# --- Load Existing Session ---
 else:
     session_name = sanitize_filename(session_name)
     session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
 
-    if session_path and os.path.exists(session_path):
+    if os.path.exists(session_path):
         with open(session_path, "r") as f:
             data = json.load(f)
 
-        if "session_key" in data:
-            if "session_key_verified" not in st.session_state:
-                st.session_state.session_key_verified = False
+        expected_session_key = data.get("session_key", None)
 
-            if not st.session_state.session_key_verified:
+        # Save selected session name
+        st.session_state["current_session_name"] = session_name
+
+        # If previously unlocked correctly
+        if (
+            st.session_state.get("current_session_name") == session_name
+            and st.session_state.get("current_session_key") == expected_session_key
+        ):
+            st.session_state["session_key_verified"] = True
+
+        # Handle unlocking if not already verified
+        if expected_session_key:
+            if not st.session_state["session_key_verified"]:
                 session_key_input = st.sidebar.text_input("Enter session key to unlock", type="password")
                 if st.sidebar.button("Unlock Session"):
-                    if session_key_input == data["session_key"]:
-                        st.session_state.session_key_verified = True
+                    if session_key_input == expected_session_key:
+                        st.session_state["session_key_verified"] = True
+                        st.session_state["current_session_key"] = session_key_input
                         st.success("Session unlocked!")
                         st.rerun()
                     else:
                         st.error("Invalid session key. Please try again.")
                         st.stop()
             else:
+                # Already unlocked, load data
                 st.session_state.index = data.get("index", 0)
                 st.session_state.edited_data = data.get("edited_data", [])
         else:
+            # No password needed
             st.session_state.index = data.get("index", 0)
             st.session_state.edited_data = data.get("edited_data", [])
-
-# --- Now, output filename and show saved sessions list ---
-output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv") if session_name else None
-
-if saved_sessions:
-    st.sidebar.markdown("---")
-    st.sidebar.caption("📁 Saved Sessions:")
-    for s in sorted(saved_sessions):
-        try:
-            path = os.path.join(SESSION_DIR, f"session_{s}.json")
-            timestamp = time.ctime(os.path.getmtime(path))
-            st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_")
-        except FileNotFoundError:
-            continue
 
 # --- Select mode ---
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
