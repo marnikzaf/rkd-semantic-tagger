@@ -148,17 +148,17 @@ if session_name == "(new session)":
         st.stop()
 
 # --- Existing Session ---
-# --- Existing Session ---
 elif session_name:
     # Generate session path
     session_name_clean = sanitize_filename(session_name)
     session_path = os.path.join(SESSION_DIR, f"session_{session_name_clean}.json")
 
-    if os.path.exists(session_path):  # Check if the session file exists
+    # Ensure the session file exists
+    if os.path.exists(session_path):
         session_data = load_session_data(session_path)  # Load session data
         expected_key = session_data.get("session_key")  # Get the session key from file
 
-        # Handle session key verification
+        # Check if the session key is already verified
         if (
             st.session_state.get("current_session_key") == expected_key and
             st.session_state.get("current_session_key") is not None
@@ -185,9 +185,8 @@ elif session_name:
                     # Handle incorrect password
                     st.error("Incorrect password. Please try again.")
                     st.stop()
-
-        # Load session data into st.session_state if unlocked
-        if st.session_state["session_key_verified"]:
+        else:
+            # Load session data into st.session_state if unlocked
             st.session_state["index"] = session_data.get("index", 0)
             st.session_state["edited_data"] = session_data.get("edited_data", [])
 
