@@ -12,10 +12,6 @@ import platform
 import re 
 import sys
 
-st.write(f"Python Executable: {sys.executable}")
-st.write(f"Python Version: {sys.version}")
-st.write(f"Virtual Environment: {os.environ.get('VIRTUAL_ENV', 'None')}")
-
 st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
 # --- CONFIG ---
