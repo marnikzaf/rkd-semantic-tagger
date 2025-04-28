@@ -143,22 +143,24 @@ if session_name == "(new session)":
         st.warning("Please also set a session key to create the session.")
         st.stop()
 
-# --- Existing session loading ---
-elif session_name:
-    session_path = os.path.join(SESSION_DIR, f"session_{sanitize_filename(session_name)}.json")
+# --- Load Existing Session ---
+elif session_name != "(new session)":
+    session_name = sanitize_filename(session_name)
+    session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
+
     if os.path.exists(session_path):
         session_data = load_session_data(session_path)
         expected_key = session_data.get("session_key")
 
-        # Check if already unlocked
-        already_unlocked = (
-            st.session_state["current_session_name"] == session_name and
-            st.session_state["current_session_key"] == expected_key and
-            st.session_state["session_key_verified"]
-        )
-
-        if not already_unlocked:
-            # Show unlock form
+        # If already unlocked (correct name, correct key, verified)
+        if (
+            st.session_state.get("current_session_name") == session_name and
+            st.session_state.get("current_session_key") == expected_key and
+            st.session_state.get("session_key_verified")
+        ):
+            pass  # Already unlocked, do nothing extra
+        else:
+            # Always force unlock prompt
             entered_key = st.sidebar.text_input("Enter session password", type="password")
             if st.sidebar.button("Unlock Session"):
                 if entered_key == expected_key:
@@ -171,17 +173,15 @@ elif session_name:
                     st.error("Incorrect password.")
                     st.stop()
 
-        # If session unlocked, load saved variables
+        # --- Load session data only if verified
         if st.session_state["session_key_verified"]:
             st.session_state["index"] = session_data.get("index", 0)
             st.session_state["edited_data"] = session_data.get("edited_data", [])
 
-            # Reattach output file
-            output_filename = os.path.join(SESSION_DIR, f"temp_output_{sanitize_filename(session_name)}.csv")
+            # Reattach CSV output file
+            output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
             if os.path.exists(output_filename):
                 st.session_state["output_ready"] = output_filename
-            else:
-                st.session_state["output_ready"] = None
 
 # --- Select mode ---
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
