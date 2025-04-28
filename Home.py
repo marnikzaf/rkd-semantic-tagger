@@ -163,12 +163,9 @@ elif session_name:
             st.session_state.get("current_session_key") == expected_key and
             st.session_state.get("current_session_key") is not None
         ):
-            # If session key matches, mark session as verified
             st.session_state["session_key_verified"] = True
         else:
-            # Reset session key verification state
             st.session_state["session_key_verified"] = False
-            st.session_state["current_session_key"] = None
 
         # Prompt for password if session is not verified
         if not st.session_state["session_key_verified"]:
@@ -184,7 +181,6 @@ elif session_name:
                 else:
                     # Handle incorrect password
                     st.error("Incorrect password. Please try again.")
-                    st.stop()
         else:
             # Load session data into st.session_state if unlocked
             st.session_state["index"] = session_data.get("index", 0)
