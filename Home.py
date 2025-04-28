@@ -198,7 +198,6 @@ if mode == "Run tagging pipeline":
                         [sys.executable, SCRIPT_NAME, input_filename, output_filename],
                         capture_output=True,
                         text=True,
-                        cwd=os.getcwd()
                     )
                     if result.returncode != 0:
                         st.error("Error running the pipeline:")
