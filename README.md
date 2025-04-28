@@ -63,7 +63,6 @@ pip install -r requirements.txt
 ### 3. Launch the Streamlit interface
 
 ```bash
-cd interface
 streamlit run Home.py
 ```
 
