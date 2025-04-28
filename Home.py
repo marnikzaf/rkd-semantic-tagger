@@ -80,30 +80,51 @@ except Exception as e:
     st.error(f"Error loading keywords: {e}")
 
 # --- Session Management ---
+import hashlib
+
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
-# --- Initialize session_state variables if not already ---
-if "current_session_name" not in st.session_state:
-    st.session_state["current_session_name"] = None
-if "current_session_key" not in st.session_state:
-    st.session_state["current_session_key"] = None
-if "session_key_verified" not in st.session_state:
-    st.session_state["session_key_verified"] = False
+def load_session_data(session_path):
+    with open(session_path, "r") as f:
+        data = json.load(f)
+    return data
 
+def save_session_data(session_path, index, edited_data, session_key=None):
+    with open(session_path, "w") as f:
+        json.dump({
+            "index": index,
+            "edited_data": edited_data,
+            "session_key": session_key,
+        }, f)
+
+# --- Initialize session_state variables if missing ---
+default_session_values = {
+    "current_session_name": None,
+    "current_session_key": None,
+    "session_key_verified": False,
+    "index": 0,
+    "edited_data": [],
+    "output_ready": None,
+}
+for key, default_value in default_session_values.items():
+    if key not in st.session_state:
+        st.session_state[key] = default_value
+
+# --- Prepare session directory ---
 SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
-# List saved sessions
+# --- List saved sessions ---
 saved_sessions = [
     f.replace("session_", "").replace(".json", "")
     for f in os.listdir(SESSION_DIR)
-    if f.startswith("session_") and "_backup_" not in f and os.path.isfile(os.path.join(SESSION_DIR, f))
+    if f.startswith("session_") and os.path.isfile(os.path.join(SESSION_DIR, f))
 ]
 
 st.sidebar.subheader("Session Management")
 
-# --- Delete session ---
+# --- Session Delete ---
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
 if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     try:
@@ -113,15 +134,13 @@ if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     except Exception as e:
         st.sidebar.error(f"Failed to delete: {e}")
 
-# --- Select or Create Session ---
+# --- Session Select/Create ---
 session_name = st.sidebar.selectbox(
     "Select or create a session",
     options=["(new session)"] + saved_sessions,
     index=0,
     format_func=lambda x: "Create new session" if x == "(new session)" else x
 )
-
-session_path = None
 
 # --- Create New Session ---
 if session_name == "(new session)":
@@ -131,17 +150,11 @@ if session_name == "(new session)":
     if new_session_input and new_session_key:
         session_name = sanitize_filename(new_session_input)
         session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
-        with open(session_path, "w") as f:
-            json.dump({
-                "index": 0,
-                "edited_data": [],
-                "metadata_cols": [],
-                "session_key": new_session_key
-            }, f)
+        save_session_data(session_path, index=0, edited_data=[], session_key=new_session_key)
         st.sidebar.success(f"Session '{session_name}' created!")
         st.rerun()
     elif new_session_input:
-        st.warning("Please also set a session key to create the session.")
+        st.warning("Please set a session key to create the session.")
         st.stop()
 
 # --- Load Existing Session ---
@@ -150,30 +163,27 @@ else:
     session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
 
     if os.path.exists(session_path):
-        with open(session_path, "r") as f:
-            data = json.load(f)
-
-        expected_session_key = data.get("session_key", None)
-
-        # Save selected session name
+        # Save current session name
         st.session_state["current_session_name"] = session_name
 
-        # Check if session already unlocked correctly
+        # Load session data
+        data = load_session_data(session_path)
+        expected_key = data.get("session_key", None)
+
+        # If already unlocked (from previous run)
         already_unlocked = (
-            st.session_state.get("current_session_name") == session_name
-            and st.session_state.get("current_session_key") == expected_session_key
+            st.session_state["current_session_name"] == session_name and
+            st.session_state["current_session_key"] == expected_key
         )
 
         if already_unlocked:
             st.session_state["session_key_verified"] = True
 
-        # If NOT unlocked yet, show password field always
-        if expected_session_key and not st.session_state["session_key_verified"]:
+        # --- Require unlocking if needed ---
+        if expected_key and not st.session_state["session_key_verified"]:
             session_key_input = st.sidebar.text_input("Enter session key to unlock", type="password")
-            unlock_button = st.sidebar.button("Unlock Session")
-
-            if unlock_button:
-                if session_key_input == expected_session_key:
+            if st.sidebar.button("Unlock Session"):
+                if session_key_input == expected_key:
                     st.session_state["session_key_verified"] = True
                     st.session_state["current_session_key"] = session_key_input
                     st.success("Session unlocked!")
@@ -182,20 +192,25 @@ else:
                     st.error("Invalid session key. Please try again.")
                     st.stop()
 
-        # Only load session data if unlocked
-        if st.session_state.session_key_verified:
-            st.session_state.index = data.get("index", 0)
-            st.session_state.edited_data = data.get("edited_data", [])
+        # --- If session unlocked, load session variables ---
+        if st.session_state["session_key_verified"]:
+            st.session_state["index"] = data.get("index", 0)
+            st.session_state["edited_data"] = data.get("edited_data", [])
 
-            # Also restore output_ready path for file
+            # Restore output_ready if exists
             output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
             if os.path.exists(output_filename):
                 st.session_state["output_ready"] = output_filename
+            else:
+                st.session_state["output_ready"] = None
 
-        elif not expected_session_key:
-            # If no password protection, load data directly
-            st.session_state.index = data.get("index", 0)
-            st.session_state.edited_data = data.get("edited_data", [])
+        # --- If no password protection
+        elif not expected_key:
+            st.session_state["index"] = data.get("index", 0)
+            st.session_state["edited_data"] = data.get("edited_data", [])
+            output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
+            if os.path.exists(output_filename):
+                st.session_state["output_ready"] = output_filename
 
 # --- Select mode ---
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
