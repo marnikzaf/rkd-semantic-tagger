@@ -17,21 +17,33 @@ The interface allows users to review, edit, and export tags via a Streamlit web 
 ## 📁 Project Structure
 
 ```
+## 📁 Project Structure
+
 semARTagger/
-├── pipeline.py                         # Main tagging pipeline script
-├── labse_logreg_model.pkl              # Trained Logistic Regression model using LaBSE embeddings
-├── labse_label_binarizer.pkl           # Label binarizer for multi-label classification
-├── SUBJECT_all_terms_DUTCH.csv         # Subject vocabulary (Dutch) for model and UI
-├── SUBJECT_all_terms_ENGLISH.csv       # Subject vocabulary (English) for model and UI
-├── rkd_aat_term_mapping.csv            # Mapping of RKD subject terms to AAT concepts
-├── example_input.csv                   # Sample input file for testing the pipeline
-├── Home.py                             # Streamlit app for uploading data, running predictions, editing tags
-├── requirements.txt                    # Environment dependencies
-└── README.md                           # Project overview and documentation
+├── .github/
+│   └── workflows/
+│       └── keep-site-alive.yml        # GitHub Action to ping the app and create an alert if down
+├── .streamlit/
+│   └── config.toml                    # Streamlit app configuration (UI settings)
+├── pages/
+│   └── About.py                       # About page for Streamlit multipage app
+├── .gitignore                         # Files and folders ignored by Git
+├── Home.py                            # Main Streamlit app interface
+├── LICENSE                            # Project license (MIT or similar)
+├── README.md                          # Project overview and documentation
+├── SUBJECT_all_terms_DUTCH.csv        # Subject vocabulary (Dutch) for tagging
+├── SUBJECT_all_terms_ENGLISH.csv      # Subject vocabulary (English) for tagging
+├── example_input.csv                  # Sample input CSV for testing
+├── labse_label_binarizer.pkl          # Label binarizer for tag prediction decoding
+├── labse_logreg_model.pkl             # Trained logistic regression model based on LaBSE
+├── packages.txt                       # (Optional) Linux system dependencies (for deployment if needed)
+├── pipeline.py                        # Backend tagging pipeline (used internally by the app)
+├── requirements.txt                   # Python environment dependencies
+└── rkd_aat_term_mapping.csv           # Mapping of RKD subject terms to AAT broader terms
 ```
 ---
 
-## 🚀 How to Use
+## How to Use
 
 ### 1. Clone the repository
 
