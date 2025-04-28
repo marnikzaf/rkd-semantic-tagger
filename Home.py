@@ -158,7 +158,7 @@ else:
         # Save selected session name
         st.session_state["current_session_name"] = session_name
 
-        # Check if already verified
+        # Check if session already unlocked correctly
         already_unlocked = (
             st.session_state.get("current_session_name") == session_name
             and st.session_state.get("current_session_key") == expected_session_key
@@ -167,18 +167,8 @@ else:
         if already_unlocked:
             st.session_state["session_key_verified"] = True
 
-        # If session is unlocked, reload session state
-        if st.session_state.session_key_verified:
-            st.session_state.index = data.get("index", 0)
-            st.session_state.edited_data = data.get("edited_data", [])
-
-            # Restore output file
-            output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
-            if os.path.exists(output_filename):
-                st.session_state["output_ready"] = output_filename
-
-        # If not unlocked yet, always show password field
-        if expected_session_key and not st.session_state.session_key_verified:
+        # If NOT unlocked yet, show password field always
+        if expected_session_key and not st.session_state["session_key_verified"]:
             session_key_input = st.sidebar.text_input("Enter session key to unlock", type="password")
             unlock_button = st.sidebar.button("Unlock Session")
 
@@ -192,11 +182,20 @@ else:
                     st.error("Invalid session key. Please try again.")
                     st.stop()
 
-        elif not expected_session_key:
-            # No password needed
+        # Only load session data if unlocked
+        if st.session_state.session_key_verified:
             st.session_state.index = data.get("index", 0)
             st.session_state.edited_data = data.get("edited_data", [])
 
+            # Also restore output_ready path for file
+            output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
+            if os.path.exists(output_filename):
+                st.session_state["output_ready"] = output_filename
+
+        elif not expected_session_key:
+            # If no password protection, load data directly
+            st.session_state.index = data.get("index", 0)
+            st.session_state.edited_data = data.get("edited_data", [])
 
 # --- Select mode ---
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
