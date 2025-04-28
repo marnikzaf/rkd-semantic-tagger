@@ -79,7 +79,6 @@ try:
 except Exception as e:
     st.error(f"Error loading keywords: {e}")
 
-# --- Session Management ---
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
@@ -95,14 +94,17 @@ def save_session_data(session_path, index, edited_data, session_key=None):
             "session_key": session_key,
         }, f)
 
-# --- Initialize session_state variables if missing ---
-for key in ["current_session_name", "current_session_key", "session_key_verified", "index", "edited_data", "output_ready"]:
+# --- Initialize session_state variables ---
+for key, default_value in {
+    "current_session_name": None,
+    "current_session_key": None,
+    "session_key_verified": False,
+    "index": 0,
+    "edited_data": [],
+    "output_ready": None
+}.items():
     if key not in st.session_state:
-        st.session_state[key] = None if key not in ["index", "edited_data"] else (0 if key == "index" else [])
-
-# --- Session Directory ---
-SESSION_DIR = "sessions"
-os.makedirs(SESSION_DIR, exist_ok=True)
+        st.session_state[key] = default_value
 
 # --- List saved sessions ---
 saved_sessions = [
@@ -123,7 +125,7 @@ if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     except Exception as e:
         st.sidebar.error(f"Failed to delete session: {e}")
 
-# --- Select or Create session ---
+# --- Select/Create session ---
 session_name = st.sidebar.selectbox(
     "Select or create a session",
     ["(new session)"] + saved_sessions,
@@ -132,56 +134,59 @@ session_name = st.sidebar.selectbox(
 
 # --- Create New Session ---
 if session_name == "(new session)":
-    new_session_name = st.sidebar.text_input("New session name")
-    new_session_key = st.sidebar.text_input("Set session password", type="password")
-    if new_session_name and new_session_key:
-        session_path = os.path.join(SESSION_DIR, f"session_{sanitize_filename(new_session_name)}.json")
+    new_session_input = st.sidebar.text_input("Enter new session name")
+    new_session_key = st.sidebar.text_input("Set a session key (password)", type="password")
+    if new_session_input and new_session_key:
+        session_name_clean = sanitize_filename(new_session_input)
+        session_path = os.path.join(SESSION_DIR, f"session_{session_name_clean}.json")
         save_session_data(session_path, index=0, edited_data=[], session_key=new_session_key)
-        st.sidebar.success(f"Session '{new_session_name}' created. Please select it now.")
+        st.sidebar.success(f"Session '{new_session_input}' created! Please select it from the list.")
         st.rerun()
-    elif new_session_name:
+    elif new_session_input:
         st.warning("Please also set a session key to create the session.")
         st.stop()
 
-# --- Load Existing Session ---
-elif session_name != "(new session)":
-    session_name = sanitize_filename(session_name)
-    session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
+# --- Existing session flow ---
+elif session_name:
+    session_name_clean = sanitize_filename(session_name)
+    session_path = os.path.join(SESSION_DIR, f"session_{session_name_clean}.json")
 
     if os.path.exists(session_path):
         session_data = load_session_data(session_path)
         expected_key = session_data.get("session_key")
 
-        # If already unlocked (correct name, correct key, verified)
-        if (
-            st.session_state.get("current_session_name") == session_name and
-            st.session_state.get("current_session_key") == expected_key and
-            st.session_state.get("session_key_verified")
-        ):
-            pass  # Already unlocked, do nothing extra
-        else:
-            # Always force unlock prompt
+        # Check if already unlocked
+        already_unlocked = (
+            st.session_state["current_session_name"] == session_name_clean and
+            st.session_state["current_session_key"] == expected_key and
+            st.session_state["session_key_verified"]
+        )
+
+        if not already_unlocked:
+            # Force unlock input
             entered_key = st.sidebar.text_input("Enter session password", type="password")
             if st.sidebar.button("Unlock Session"):
                 if entered_key == expected_key:
-                    st.session_state["current_session_name"] = session_name
+                    st.session_state["current_session_name"] = session_name_clean
                     st.session_state["current_session_key"] = entered_key
                     st.session_state["session_key_verified"] = True
                     st.success("Session unlocked!")
                     st.rerun()
                 else:
-                    st.error("Incorrect password.")
+                    st.error("Incorrect password. Please try again.")
                     st.stop()
 
-        # --- Load session data only if verified
+        # If session unlocked, load everything
         if st.session_state["session_key_verified"]:
             st.session_state["index"] = session_data.get("index", 0)
             st.session_state["edited_data"] = session_data.get("edited_data", [])
 
-            # Reattach CSV output file
-            output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
+            # Also reload output_ready
+            output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name_clean}.csv")
             if os.path.exists(output_filename):
                 st.session_state["output_ready"] = output_filename
+            else:
+                st.session_state["output_ready"] = None
 
 # --- Select mode ---
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
@@ -239,6 +244,7 @@ def auto_save_session():
             json.dump({
                 "index": st.session_state.index,
                 "edited_data": st.session_state.edited_data,
+                "session_key": st.session_state.get("current_session_key", None),
             }, f)
         st.session_state["last_autosave"] = datetime.datetime.now().strftime("%H:%M:%S")
 
