@@ -79,103 +79,76 @@ try:
 except Exception as e:
     st.error(f"Error loading keywords: {e}")
 
-# --- Session Management ---
+# --- Load vocabularies ---
+dutch_keywords, english_keywords = [], []
+try:
+    dutch_terms = pd.read_csv("SUBJECT_all_terms_DUTCH.csv")
+    english_terms = pd.read_csv("SUBJECT_all_terms_ENGLISH.csv")
+    dutch_keywords = sorted(dutch_terms["term"].dropna().unique().tolist())
+    english_keywords = sorted(english_terms["term"].dropna().unique().tolist())
+except Exception as e:
+    st.error(f"Error loading keywords: {e}")
+
+# --- Session functions ---
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
-SESSION_DIR = "sessions"
-os.makedirs(SESSION_DIR, exist_ok=True)
+def auto_save_session():
+    if session_path and "index" in st.session_state and "edited_data" in st.session_state:
+        with open(session_path, "w") as f:
+            json.dump({
+                "index": st.session_state.index,
+                "edited_data": st.session_state.edited_data,
+            }, f)
+        st.session_state["last_autosave"] = datetime.datetime.now().strftime("%H:%M:%S")
 
-# List saved sessions
+# --- Session Management ---
+session_path = None
 saved_sessions = [
     f.replace("session_", "").replace(".json", "")
     for f in os.listdir(SESSION_DIR)
-    if f.startswith("session_") and "_backup_" not in f and os.path.isfile(os.path.join(SESSION_DIR, f))
+    if f.startswith("session_")
 ]
-
 st.sidebar.subheader("Session Management")
 
-# --- Delete session ---
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
 if session_to_delete != "None" and st.sidebar.button("Delete Session"):
-    try:
-        os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
-        st.sidebar.success(f"Deleted session: {session_to_delete}")
-        st.rerun()
-    except Exception as e:
-        st.sidebar.error(f"Failed to delete: {e}")
+    os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
+    st.sidebar.success(f"Deleted session: {session_to_delete}")
+    st.rerun()
 
-# --- Select or Create Session ---
 session_name = st.sidebar.selectbox(
     "Select or create a session",
     options=["(new session)"] + saved_sessions,
     index=0,
-    format_func=lambda x: "Create new session" if x == "(new session)" else x
+    format_func=lambda x: "Create new session" if x == "(new session)" else x,
+    key="session_select"
 )
 
-# --- Create or Unlock session ---
-session_path = None
 if session_name == "(new session)":
     new_session_input = st.sidebar.text_input("Enter a new session name")
-    new_session_key = st.sidebar.text_input("Set a session key (password)", type="password")
-
-    if new_session_input and new_session_key:
+    if new_session_input:
         session_name = sanitize_filename(new_session_input)
         session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
         with open(session_path, "w") as f:
-            json.dump({
-                "index": 0,
-                "edited_data": [],
-                "metadata_cols": [],
-                "session_key": new_session_key
-            }, f)
+            json.dump({"index": 0, "edited_data": []}, f)
         st.sidebar.success(f"Session '{session_name}' created!")
+        st.session_state["restored_session"] = session_name
         st.rerun()
-    elif new_session_input:
-        st.warning("Please also set a session key to create the session.")
+    else:
+        st.warning("Please enter a valid session name.")
         st.stop()
 else:
-    session_name = sanitize_filename(session_name)
     session_path = os.path.join(SESSION_DIR, f"session_{session_name}.json")
-
-    if session_path and os.path.exists(session_path):
-        with open(session_path, "r") as f:
-            data = json.load(f)
-
-        if "session_key" in data:
-            if "session_key_verified" not in st.session_state:
-                st.session_state.session_key_verified = False
-
-            if not st.session_state.session_key_verified:
-                session_key_input = st.sidebar.text_input("Enter session key to unlock", type="password")
-                if st.sidebar.button("Unlock Session"):
-                    if session_key_input == data["session_key"]:
-                        st.session_state.session_key_verified = True
-                        st.success("Session unlocked!")
-                        st.rerun()
-                    else:
-                        st.error("Invalid session key. Please try again.")
-                        st.stop()
-            else:
+    if "restored_session" not in st.session_state or st.session_state["restored_session"] != session_name:
+        if os.path.exists(session_path):
+            with open(session_path, "r") as f:
+                data = json.load(f)
                 st.session_state.index = data.get("index", 0)
                 st.session_state.edited_data = data.get("edited_data", [])
-        else:
-            st.session_state.index = data.get("index", 0)
-            st.session_state.edited_data = data.get("edited_data", [])
+            st.session_state["restored_session"] = session_name
 
-# --- Now, output filename and show saved sessions list ---
-output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv") if session_name else None
-
-if saved_sessions:
-    st.sidebar.markdown("---")
-    st.sidebar.caption("📁 Saved Sessions:")
-    for s in sorted(saved_sessions):
-        try:
-            path = os.path.join(SESSION_DIR, f"session_{s}.json")
-            timestamp = time.ctime(os.path.getmtime(path))
-            st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_")
-        except FileNotFoundError:
-            continue
+output_filename = f"temp_output_{session_name}.csv" if session_name else None
 
 # --- Select mode ---
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
