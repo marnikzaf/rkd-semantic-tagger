@@ -12,6 +12,19 @@ import platform
 import re 
 import sys
 
+# Check if the postinstall.sh script exists
+if os.path.exists("postinstall.sh"):
+    print("Running postinstall.sh...")
+    result = subprocess.run(["bash", "postinstall.sh"], capture_output=True, text=True)
+    print(result.stdout)
+    if result.returncode != 0:
+        print("Error running postinstall.sh:")
+        print(result.stderr)
+    else:
+        print("postinstall.sh executed successfully.")
+else:
+    print("postinstall.sh not found.")
+
 st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
 
 # --- CONFIG ---
