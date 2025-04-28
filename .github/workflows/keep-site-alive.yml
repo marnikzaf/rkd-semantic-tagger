@@ -1,0 +1,31 @@
+name: Keep Streamlit App Alive + Create Alert 
+
+permissions:
+  contents: write
+  issues: write
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # Every day at 08:00 UTC
+    - cron: '0 20 * * *'  # Every day at 20:00 UTC
+  workflow_dispatch:      # Manual trigger
+
+jobs:
+  ping-site:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Ping the Streamlit app
+      id: ping
+      run: |
+        RESPONSE=$(curl --silent --output /dev/null --write-out "%{http_code}" https://semartagger.streamlit.app/)
+        echo "HTTP_RESPONSE=$RESPONSE" >> $GITHUB_ENV
+        echo "App responded with status $RESPONSE"
+
+    - name: Create GitHub Issue if app is DOWN
+      if: env.HTTP_RESPONSE != '200' && env.HTTP_RESPONSE != '303'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "App is DOWN with status $HTTP_RESPONSE"
+        gh issue create --title "Streamlit App Down Alert" --body "The Streamlit app [semARTagger](https://semartagger.streamlit.app/) is down. Status code: $HTTP_RESPONSE." --repo ${{ github.repository }}
