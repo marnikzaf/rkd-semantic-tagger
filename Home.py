@@ -193,7 +193,7 @@ elif mode == "Upload pre-tagged CSV":
 
 # --- Auto-save function with timestamp ---
 def auto_save_session():
-    if session_path:
+    if session_path and "index" in st.session_state and "edited_data" in st.session_state:
         with open(session_path, "w") as f:
             json.dump({
                 "index": st.session_state.index,
