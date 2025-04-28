@@ -25,7 +25,7 @@ semARTagger/
 ├── SUBJECT_all_terms_ENGLISH.csv       # Subject vocabulary (English) for model and UI
 ├── rkd_aat_term_mapping.csv            # Mapping of RKD subject terms to AAT concepts
 ├── example_input.csv                   # Sample input file for testing the pipeline
-├── semARTagger.py                      # Streamlit app for uploading data, running predictions, editing tags
+├── Home.py                             # Streamlit app for uploading data, running predictions, editing tags
 ├── requirements.txt                    # Environment dependencies
 └── README.md                           # Project overview and documentation
 ```
@@ -52,14 +52,14 @@ pip install -r requirements.txt
 
 ```bash
 cd interface
-streamlit run semARTagger.py
+streamlit run Home.py
 ```
 
 You’ll be able to upload data, run the tagging pipeline, review predicted tags, edit them, and export results.
 
 ---
 
-**Interface Overview**
+## Interface Overview
 
 - Upload a CSV file with artwork titles (the file should have a column titled "Artwork").
 - Run the automated tagging pipeline inside the app.
