@@ -91,6 +91,9 @@ if "current_session_key" not in st.session_state:
 if "session_key_verified" not in st.session_state:
     st.session_state["session_key_verified"] = False
 
+SESSION_DIR = "sessions"
+os.makedirs(SESSION_DIR, exist_ok=True)
+
 # List saved sessions
 saved_sessions = [
     f.replace("session_", "").replace(".json", "")
@@ -162,6 +165,13 @@ else:
         ):
             st.session_state["session_key_verified"] = True
 
+        # Always reload session data if unlocked
+        if st.session_state.session_key_verified and session_path and os.path.exists(session_path):
+            with open(session_path, "r") as f:
+                data = json.load(f)
+            st.session_state.index = data.get("index", 0)
+            st.session_state.edited_data = data.get("edited_data", [])
+
         # Handle unlocking if not already verified
         if expected_session_key:
             if not st.session_state["session_key_verified"]:
@@ -175,10 +185,6 @@ else:
                     else:
                         st.error("Invalid session key. Please try again.")
                         st.stop()
-            else:
-                # Already unlocked, load data
-                st.session_state.index = data.get("index", 0)
-                st.session_state.edited_data = data.get("edited_data", [])
         else:
             # No password needed
             st.session_state.index = data.get("index", 0)
