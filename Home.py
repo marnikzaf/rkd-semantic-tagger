@@ -12,16 +12,14 @@ import platform
 import re
 
 # --- CONFIG ---
-SCRIPT_NAME = "final_final_pipeline.py"
+SCRIPT_NAME = "pipeline.py"
 SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
-st.set_page_config(layout="wide")
-
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
-<h1 class="kaushan-title" style='
-    font-family: "Kaushan Script", cursive !important;
+<link href="https://fonts.googleapis.com/css2?family=Over+the+Rainbow&display=swap" rel="stylesheet">
+<h1 class="overtherainbow-title" style='
+    font-family: "Over the Rainbow", cursive !important;
     font-size: 4rem;
     font-weight: 400;
     letter-spacing: 2px;
@@ -30,18 +28,23 @@ st.markdown("""
     semARTagger
 </h1>
 <style>
-.kaushan-title {
-    font-family: 'Kaushan Script', cursive !important;
+body, html {
+    background-color: #000 !important;
+}
+.overtherainbow-title {
+    font-family: 'Over the Rainbow', cursive !important;
     font-weight: 400 !important;
     letter-spacing: 2px;
+    /* No text-shadow */
 }
 </style>
 """, unsafe_allow_html=True)
 
+# --- Load Questrial font from Google Fonts and force it everywhere ---
 st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
     <style>
-        *:not(.montserrat-title):not(.kaushan-title) { font-family: 'Questrial', sans-serif !important; }
+        *:not(.montserrat-title):not(.overtherainbow-title) { font-family: 'Questrial', sans-serif !important; }
         html, body, [class*="css"] { font-size: 16px; line-height: 1.6; }
         body { background-color: #111; color: #eee; }
         .stButton>button {
@@ -65,7 +68,7 @@ st.markdown("""
         }
         /* Make all sidebar labels bigger */
         [data-testid="stSidebar"] label {
-            font-size: 13px !important;
+            font-size: 15px !important;
             font-weight: 600 !important;
         }
         .montserrat-title {
@@ -95,7 +98,7 @@ saved_sessions = [
     for f in os.listdir(SESSION_DIR)
     if f.startswith("session_") and "_backup_" not in f
 ]
-st.sidebar.subheader("Session Management")
+st.sidebar.subheader("SESSION MANAGEMENT")
 session_to_delete = st.sidebar.selectbox("Delete a session (optional)", ["None"] + saved_sessions)
 if session_to_delete != "None" and st.sidebar.button("Delete Session"):
     os.remove(os.path.join(SESSION_DIR, f"session_{session_to_delete}.json"))
@@ -238,7 +241,7 @@ if session_path and "output_ready" in st.session_state:
                 "index": st.session_state.index,
                 "edited_data": st.session_state.edited_data,
             }, f)
-        st.sidebar.success("✅ Session saved!")
+        st.sidebar.success("Session saved!")
         st.session_state["last_autosave"] = datetime.datetime.now().strftime("%H:%M:%S")
     st.sidebar.button("💾 Save Session", on_click=save_session)
 
@@ -255,7 +258,7 @@ if session_path and "output_ready" in st.session_state:
             export_df = pd.DataFrame(st.session_state.edited_data)
             export_df.to_csv(export_filename, index=False)
             with open(export_filename, "rb") as f:
-                st.sidebar.download_button("⬇️ Download CSV", f, file_name=export_filename, mime="text/csv")
+                st.sidebar.download_button("Download CSV", f, file_name=export_filename, mime="text/csv")
         else:
             st.sidebar.warning("No edited data to export yet!")
 
