@@ -9,19 +9,24 @@ import threading
 import datetime
 from collections import Counter
 import platform
-import re 
-import sys
-
-st.set_page_config(page_title="semARTagger", page_icon="🏷️", layout="wide")
+import re
 
 # --- CONFIG ---
-SCRIPT_NAME = "pipeline.py"
+SCRIPT_NAME = "final_final_pipeline.py"
 SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
+st.set_page_config(layout="wide")
+
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
-<h1 class="kaushan-title" style='font-family: "Kaushan Script", cursive !important; font-size: 4rem; font-weight: 400; letter-spacing: 2px; margin-bottom: 0.5em;'>
+<h1 class="kaushan-title" style='
+    font-family: "Kaushan Script", cursive !important;
+    font-size: 4rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    margin-bottom: 0.5em;
+'>
     semARTagger
 </h1>
 <style>
@@ -34,42 +39,43 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
-<style>
-    *:not(.montserrat-title):not(.kaushan-title) { font-family: 'Questrial', sans-serif !important; }
-    html, body, [class*="css"] { font-size: 14px; line-height: 1.6; }
-    body { background-color: #111; color: #eee; }
-    .stButton>button {
-       background-color: transparent;
-       color: inherit;
-       font-size: 13px !important;
-       padding: 8px 16px;
-       border: 1px solid currentColor;
-       border-radius: 8px;
-       cursor: pointer;
-       white-space: nowrap !important;
-    }
-    .stButton>button:hover { background-color: rgba(255, 255, 255, 0.1); }
-    .stTextInput input, .stTextArea textarea,
-    .stMultiselect>div>div>input, .stSelectbox>div>div>input {
-       padding: 8px;
-       border-radius: 5px;
-       border: 1px solid #888;
-       background-color: inherit;
-       color: inherit;
-    }
-    [data-testid="stSidebar"] label {
-        font-size: 13px !important;
-        font-weight: 600 !important;
-    }
-    .montserrat-title {
-        font-family: 'Montserrat', sans-serif !important;
-        font-weight: 700 !important;
-    }
-</style>
+    <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
+    <style>
+        *:not(.montserrat-title):not(.kaushan-title) { font-family: 'Questrial', sans-serif !important; }
+        html, body, [class*="css"] { font-size: 16px; line-height: 1.6; }
+        body { background-color: #111; color: #eee; }
+        .stButton>button {
+           background-color: transparent;
+           color: inherit;
+           font-size: 13px !important;
+           padding: 8px 16px;
+           border: 1px solid currentColor;
+           border-radius: 8px;
+           cursor: pointer;
+           white-space: nowrap !important;
+        }
+        .stButton>button:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .stTextInput input, .stTextArea textarea,
+        .stMultiselect>div>div>input, .stSelectbox>div>div>input {
+           padding: 8px;
+           border-radius: 5px;
+           border: 1px solid #888;
+           background-color: inherit;
+           color: inherit;
+        }
+        /* Make all sidebar labels bigger */
+        [data-testid="stSidebar"] label {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+        }
+        .montserrat-title {
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: 700 !important;
+        }
+    </style>
 """, unsafe_allow_html=True)
-            
-# --- Load vocabularies ---
+
+# --- Load full vocabularies for dropdowns ---
 dutch_keywords, english_keywords = [], []
 try:
     dutch_terms = pd.read_csv("SUBJECT_all_terms_DUTCH.csv")
@@ -144,26 +150,21 @@ if saved_sessions:
         path = os.path.join(SESSION_DIR, f"session_{s}.json")
         timestamp = time.ctime(os.path.getmtime(path))
         st.sidebar.markdown(f"- `{s}` _(last modified: {timestamp})_)")
-                
-# --- Select mode ---
+
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
 
 if mode == "Run tagging pipeline":
     uploaded_file = st.file_uploader("Upload your CSV file", type="csv", key="pipeline_upload")
     if uploaded_file:
-        input_filename = os.path.join(SESSION_DIR, f"temp_input_{session_name}.csv")
-        output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
-
+        input_filename = f"temp_input_{session_name}.csv"
         with open(input_filename, "wb") as f:
             f.write(uploaded_file.read())
-
         output_name = st.text_input("Name your output CSV (for download only)", value="tagged_output")
-
         if st.button("Run Tagging Pipeline"):
             with st.spinner("Running the tagging pipeline..."):
                 try:
                     result = subprocess.run(
-                        [sys.executable, SCRIPT_NAME, input_filename, output_filename],
+                        ["python", SCRIPT_NAME, input_filename, output_filename],
                         capture_output=True,
                         text=True,
                     )
@@ -180,7 +181,6 @@ if mode == "Run tagging pipeline":
 elif mode == "Upload pre-tagged CSV":
     pretagged_file = st.file_uploader("Upload a pre-tagged CSV file", type="csv", key="pretagged_upload")
     if pretagged_file:
-        output_filename = os.path.join(SESSION_DIR, f"temp_output_{session_name}.csv")
         with open(output_filename, "wb") as f:
             f.write(pretagged_file.read())
         st.session_state["output_ready"] = output_filename
@@ -188,20 +188,13 @@ elif mode == "Upload pre-tagged CSV":
     else:
         st.warning("Please upload a pre-tagged CSV file.")
 
-# --- Ensure session_state variables are initialized ---
-if "index" not in st.session_state:
-    st.session_state["index"] = 0
-if "edited_data" not in st.session_state:
-    st.session_state["edited_data"] = []
-
 # --- Auto-save function with timestamp ---
 def auto_save_session():
-    if 'session_path' in locals() or 'session_path' in globals():
+    if session_path:
         with open(session_path, "w") as f:
             json.dump({
                 "index": st.session_state.index,
                 "edited_data": st.session_state.edited_data,
-                "session_key": st.session_state.get("current_session_key", None),
             }, f)
         st.session_state["last_autosave"] = datetime.datetime.now().strftime("%H:%M:%S")
 
@@ -245,7 +238,7 @@ if session_path and "output_ready" in st.session_state:
                 "index": st.session_state.index,
                 "edited_data": st.session_state.edited_data,
             }, f)
-        st.sidebar.success("Session saved!")
+        st.sidebar.success("✅ Session saved!")
         st.session_state["last_autosave"] = datetime.datetime.now().strftime("%H:%M:%S")
     st.sidebar.button("💾 Save Session", on_click=save_session)
 
@@ -262,7 +255,7 @@ if session_path and "output_ready" in st.session_state:
             export_df = pd.DataFrame(st.session_state.edited_data)
             export_df.to_csv(export_filename, index=False)
             with open(export_filename, "rb") as f:
-                st.sidebar.download_button("Download CSV", f, file_name=export_filename, mime="text/csv")
+                st.sidebar.download_button("⬇️ Download CSV", f, file_name=export_filename, mime="text/csv")
         else:
             st.sidebar.warning("No edited data to export yet!")
 
