@@ -96,7 +96,7 @@ def step3_ner_tags(df):
     df["NER_Tags"] = ner_tags
     return df
 
-def step5_aat_expansion(df, aat_dict_path):
+def step4_aat_expansion(df, aat_dict_path):
     aat_map = pd.read_csv(aat_dict_path)
     rkd_to_broader = (
         aat_map.set_index("rkd_term")["broader_terms"]
@@ -180,7 +180,7 @@ def main():
         df = step1_predict(df, args.model_path, args.binarizer_path)
         df = step2_embedder_fallback(df, args.en_terms_path, args.nl_terms_path)
         df = step3_ner_tags(df)
-        df = step5_aat_expansion(df, args.aat_dict_path)
+        df = step4_aat_expansion(df, args.aat_dict_path)
         df = merge_and_split_tags(df, args.en_terms_path, args.nl_terms_path)
 
         print(f"Saving to: {args.output_file}")  # Debugging line
