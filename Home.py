@@ -156,7 +156,7 @@ elif session_name:
         session_data = load_session_data(session_path)
         expected_key = session_data.get("session_key")
 
-        # After refresh: check if current_session_key matches expected
+        # Check if session key is already verified
         if (
             st.session_state.get("current_session_key") == expected_key and
             st.session_state.get("current_session_key") is not None
@@ -166,7 +166,7 @@ elif session_name:
             st.session_state["session_key_verified"] = False
             st.session_state["current_session_key"] = None
 
-        # --- If not unlocked, ask for password ---
+        # Prompt for password if not verified
         if not st.session_state["session_key_verified"]:
             entered_key = st.sidebar.text_input("Enter session password", type="password")
             if st.sidebar.button("Unlock Session"):
@@ -180,7 +180,7 @@ elif session_name:
                     st.error("Incorrect password. Please try again.")
                     st.stop()
 
-        # --- If unlocked, load session data ---
+        # Load session data if unlocked
         if st.session_state["session_key_verified"]:
             st.session_state["index"] = session_data.get("index", 0)
             st.session_state["edited_data"] = session_data.get("edited_data", [])
@@ -191,6 +191,8 @@ elif session_name:
                 st.session_state["output_ready"] = output_filename
             else:
                 st.session_state["output_ready"] = None
+    else:
+        st.warning("Session file does not exist.")
                 
 # --- Select mode ---
 mode = st.sidebar.radio("Choose input mode:", ["Run tagging pipeline", "Upload pre-tagged CSV"])
