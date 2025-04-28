@@ -79,7 +79,6 @@ try:
 except Exception as e:
     st.error(f"Error loading keywords: {e}")
 
-
 def sanitize_filename(name):
     return re.sub(r'[^a-zA-Z0-9_\-]', '_', name)
 
@@ -158,13 +157,17 @@ elif session_name:
         expected_key = session_data.get("session_key")
 
         # 🛠 After refresh: check if current_session_key matches expected
-        if st.session_state.get("current_session_key") == expected_key:
+        if (
+            st.session_state.get("current_session_key") == expected_key and
+            st.session_state.get("current_session_key") is not None
+        ):
             st.session_state["session_key_verified"] = True
         else:
             st.session_state["session_key_verified"] = False
+            st.session_state["current_session_key"] = None
 
+        # --- If not unlocked, ask for password ---
         if not st.session_state["session_key_verified"]:
-            # Force unlock prompt
             entered_key = st.sidebar.text_input("Enter session password", type="password")
             if st.sidebar.button("Unlock Session"):
                 if entered_key == expected_key:
