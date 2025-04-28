@@ -17,7 +17,7 @@ The interface allows users to review, edit, and export tags via a Streamlit web 
 ## 📁 Project Structure
 
 ```
-rkd-semantic-tagger/
+semARTagger/
 ├── pipeline.py                         # Main tagging pipeline script
 ├── labse_logreg_model.pkl              # Trained Logistic Regression model using LaBSE embeddings
 ├── labse_label_binarizer.pkl           # Label binarizer for multi-label classification
@@ -25,7 +25,7 @@ rkd-semantic-tagger/
 ├── SUBJECT_all_terms_ENGLISH.csv       # Subject vocabulary (English) for model and UI
 ├── rkd_aat_term_mapping.csv            # Mapping of RKD subject terms to AAT concepts
 ├── example_input.csv                   # Sample input file for testing the pipeline
-├── interface.py                        # Streamlit app for uploading data, running predictions, editing tags
+├── semARTagger.py                      # Streamlit app for uploading data, running predictions, editing tags
 ├── requirements.txt                    # Environment dependencies
 └── README.md                           # Project overview and documentation
 ```
@@ -36,8 +36,8 @@ rkd-semantic-tagger/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/rkd-semantic-tagger.git
-cd rkd-semantic-tagger
+git clone https://github.com/marnikzaf/semARTagger.git
+cd semARTagger
 ```
 
 ### 2. Install dependencies
@@ -48,25 +48,24 @@ We recommend using Python 3.9+ and a virtual environment:
 pip install -r requirements.txt
 ```
 
-### 3. Run the pipeline
-
-Make sure your input CSV contains a column titled `"Artwork"` with Dutch or French titles.
-
-```bash
-cd pipeline
-python pipeline.py --input example_input.csv
-```
-
-### 4. Launch the Streamlit interface
+### 3. Launch the Streamlit interface
 
 ```bash
 cd interface
-streamlit run interface.py
+streamlit run semARTagger.py
 ```
 
 You’ll be able to upload data, run the tagging pipeline, review predicted tags, edit them, and export results.
 
 ---
+
+**Interface Overview**
+
+- Upload a CSV file with artwork titles (the file should have a column titled "Artwork").
+- Run the automated tagging pipeline inside the app.
+- Review, edit, and add tags for each artwork entry.
+- Save progress and export edited tags as a new CSV file.
+- Each session is protected by a password and can be saved and resumed later.
 
 ## Example Input
 
