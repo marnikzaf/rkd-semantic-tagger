@@ -20,52 +20,64 @@ SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
-<h1 class="kaushan-title" style='font-family: "Kaushan Script", cursive !important; font-size: 4rem; font-weight: 400; letter-spacing: 2px; margin-bottom: 0.5em;'>
-    semARTagger
-</h1>
-<style>
-.kaushan-title {
-    font-family: 'Kaushan Script', cursive !important;
-    font-weight: 400 !important;
-    letter-spacing: 2px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
 <style>
+    /* Global font */
     *:not(.montserrat-title):not(.kaushan-title) { font-family: 'Questrial', sans-serif !important; }
-    html, body, [class*="css"] { font-size: 14px; line-height: 1.6; }
-    body { background-color: #111; color: #eee; }
-    .stButton>button {
-       background-color: transparent;
-       color: inherit;
-       font-size: 13px !important;
-       padding: 8px 16px;
-       border: 1px solid currentColor;
-       border-radius: 8px;
-       cursor: pointer;
-       white-space: nowrap !important;
+
+    /* Background color */
+    html, body, [data-testid="stAppViewContainer"] {
+        background-color: #f5f5f5 !important; /* Light Grey */
+        color: #1a1a1a !important; /* Near Black for primary text */
     }
-    .stButton>button:hover { background-color: rgba(255, 255, 255, 0.1); }
-    .stTextInput input, .stTextArea textarea,
-    .stMultiselect>div>div>input, .stSelectbox>div>div>input {
-       padding: 8px;
-       border-radius: 5px;
-       border: 1px solid #888;
-       background-color: inherit;
-       color: inherit;
+
+    /* Sidebar styles */
+    [data-testid="stSidebar"] {
+        background-color: #EEE09C !important; /* Light Gold */
     }
     [data-testid="stSidebar"] label {
         font-size: 13px !important;
         font-weight: 600 !important;
+        color: #4a4a4a !important; /* Dark Grey for secondary text */
     }
-    .montserrat-title {
-        font-family: 'Montserrat', sans-serif !important;
-        font-weight: 700 !important;
+
+    /* Button styles */
+    .stButton>button {
+        background-color: #2a9d8f !important; /* Teal */
+        color: #f5f5f5 !important; /* Light Grey for button text */
+        font-size: 13px !important;
+        padding: 8px 16px;
+        border: 1px solid #2a9d8f !important; /* Same as background */
+        border-radius: 8px;
+        cursor: pointer;
+        white-space: nowrap !important;
     }
+    .stButton>button:hover {
+        background-color: #21867a !important; /* Darker Teal */
+    }
+
+    /* Input fields */
+    .stTextInput input, .stTextArea textarea,
+    .stMultiselect>div>div>input, .stSelectbox>div>div>input {
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #e0e7ef !important; /* Pale Blue-Grey */
+        background-color: inherit;
+        color: inherit;
+    }
+
+    /* Metadata styling */
+    .metadata {
+        font-size: 20px;
+        color: #1a1a1a !important; /* Near Black */
+    }
+
+    /* Error/Warning messages */
+    .stAlert {
+        background-color: #fff3cd !important; /* Pale Yellow */
+        color: #111 !important; /* Dark text for better contrast */
+    }
+
 </style>
 """, unsafe_allow_html=True)
             
@@ -207,14 +219,14 @@ if mode == "Run tagging pipeline":
                         text=True,
                     )
                     if result.returncode != 0:
-                        st.error("Error running the pipeline:")
+                        st.error("✕ Error running the pipeline:")
                         st.code(result.stderr)
                     else:
-                        st.success("Pipeline completed successfully!")
+                        st.success("✔︎ Pipeline completed successfully!")
                         st.session_state["output_ready"] = output_filename
                         st.info(f"Output file created: {output_filename}")
                 except Exception as e:
-                    st.error(f"Exception occurred while running the pipeline: {e}")
+                    st.error(f"✕ Exception occurred while running the pipeline: {e}")
 
 elif mode == "Upload pre-tagged CSV":
     pretagged_file = st.file_uploader("Upload a pre-tagged CSV file", type="csv", key="pretagged_upload")
@@ -223,7 +235,7 @@ elif mode == "Upload pre-tagged CSV":
         with open(output_filename, "wb") as f:
             f.write(pretagged_file.read())
         st.session_state["output_ready"] = output_filename
-        st.success("File uploaded and ready for review!")
+        st.success("✔︎ File uploaded and ready for review!")
     else:
         st.warning("Please upload a pre-tagged CSV file.")
 
@@ -289,7 +301,14 @@ if session_path and "output_ready" in st.session_state:
 
     # --- Show last auto-save time in the sidebar (after Save Session) ---
     last_autosave = st.session_state.get("last_autosave", "Never")
-    st.sidebar.info(f"Last saved at {last_autosave}")
+    st.sidebar.markdown(
+    f"""
+    <div style="color: #000000; font-weight: bold; margin: 0; padding: 0;">
+        Last saved at {last_autosave}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
     # --- Export to CSV (with editable filename) ---
     export_filename = st.sidebar.text_input(
@@ -367,11 +386,11 @@ if session_path and "output_ready" in st.session_state:
     # --- Navigation Buttons (Back left, Save & Continue right, aligned) ---
     col1, col2, col3 = st.columns([2, 8, 2])
     with col1:
-        back_clicked = st.button("Back", key="back_btn")
+        back_clicked = st.button("← Back", key="back_btn")
     with col2:
         pass  # Spacer
     with col3:
-        save_continue_clicked = st.button("Save & Continue", key="save_btn")  # Emoji removed to prevent wrapping
+        save_continue_clicked = st.button("Save & Continue →", key="save_btn") 
 
     if save_continue_clicked:
         updated_row = df.iloc[st.session_state.index].to_dict()
