@@ -73,10 +73,10 @@ st.markdown("""
     }
 
     /* Error/Warning messages */
-    .stAlert {
-        background-color: #fff3cd !important; /* Pale Yellow */
-        color: #111 !important; /* Dark text for better contrast */
-    }
+    [data-testid^="stNotificationContent"] {
+    background-color: #fff3cd !important;  /* Pale yellow */
+    color: #000000 !important;             /* Force true black */
+    font-weight: 600 !important;
 
 </style>
 """, unsafe_allow_html=True)
