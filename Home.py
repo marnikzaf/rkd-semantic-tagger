@@ -20,6 +20,26 @@ SESSION_DIR = "sessions"
 os.makedirs(SESSION_DIR, exist_ok=True)
 
 st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
+<h1 class="kaushan-title" style='
+    font-family: "Kaushan Script", cursive !important;
+    font-size: 4rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    margin-bottom: 0.5em;
+'>
+    semARTagger
+</h1>
+<style>
+.kaushan-title {
+    font-family: 'Kaushan Script', cursive !important;
+    font-weight: 400 !important;
+    letter-spacing: 2px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
 <style>
     /* Global font */
